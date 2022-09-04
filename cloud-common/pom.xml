@@ -17,7 +17,6 @@
     </properties>
 
     <dependencies>
-
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -28,7 +27,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
 
         <!--数据库连接-->
         <dependency>
@@ -42,13 +40,11 @@
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>
 
-
         <!--单元测试-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
         </dependency>
-
 
         <!--redis客户端-->
         <dependency>
@@ -61,12 +57,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>redis.clients</groupId>
             <artifactId>jedis</artifactId>
         </dependency>
-
-
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-lang3 -->
         <dependency>
@@ -86,7 +81,6 @@
             <artifactId>jjwt</artifactId>
         </dependency>
 
-
         <!--redisson分布式锁-->
         <dependency>
             <groupId>org.redisson</groupId>
@@ -94,7 +88,6 @@
         </dependency>
 
         <!--Hoxton.M2版本之后不再使用Ribbon而是使用spring-cloud-loadbalancer，所以不引入spring-cloud-loadbalancer会报错，所以加入spring-cloud-loadbalancer依赖 并且在nacos中排除ribbon依赖，不然loadbalancer无效 -->
-
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
