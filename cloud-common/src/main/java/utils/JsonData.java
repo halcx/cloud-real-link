@@ -3,9 +3,7 @@ package utils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import enums.BizCodeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
@@ -15,7 +13,6 @@ public class JsonData {
     /**
      * 状态码 0 表示成功
      */
-
     private Integer code;
     /**
      * 数据
