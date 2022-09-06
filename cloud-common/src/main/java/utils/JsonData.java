@@ -9,7 +9,6 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class JsonData {
-
     /**
      * 状态码 0 表示成功
      */

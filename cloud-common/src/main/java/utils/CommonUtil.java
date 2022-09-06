@@ -162,9 +162,7 @@ public class CommonUtil {
      * @param obj
      */
     public static void sendJsonMessage(HttpServletResponse response, Object obj) {
-
         response.setContentType("application/json; charset=utf-8");
-
         try (PrintWriter writer = response.getWriter()) {
             writer.print(JsonUtil.obj2Json(obj));
             response.flushBuffer();
@@ -172,5 +170,4 @@ public class CommonUtil {
             log.warn("响应json数据给前端异常:{}",e);
         }
     }
-
 }
