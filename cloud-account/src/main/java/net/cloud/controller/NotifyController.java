@@ -19,7 +19,7 @@ public class NotifyController {
      */
     @RequestMapping("send_code")
     public JsonData sendCode(){
-        notifyService.testSend();
+
         return JsonData.buildSuccess();
     }
 

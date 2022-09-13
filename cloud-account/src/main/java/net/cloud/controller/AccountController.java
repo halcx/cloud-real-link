@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @since 2022-09-07
  */
 @RestController
-@RequestMapping("/api/v1/acc ount")
+@RequestMapping("/api/v1/account")
 public class AccountController {
 
 }

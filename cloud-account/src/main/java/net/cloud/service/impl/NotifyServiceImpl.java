@@ -18,17 +18,4 @@ public class NotifyServiceImpl implements NotifyService {
     @Autowired
     private RestTemplate restTemplate;
 
-    /**
-     * 用于测试
-     */
-    @Override
-    @Async("threadPoolTaskExecutor")
-    public void testSend() {
-        long beginTime = CommonUtil.getCurrentTimestamp();
-        ResponseEntity<String> response = restTemplate.getForEntity("http://old.xdclass.net", String.class);
-        String body = response.getBody();
-        long endTime = CommonUtil.getCurrentTimestamp();
-        log.info("耗时:{}",endTime-beginTime);
-        log.info(body);
-    }
 }

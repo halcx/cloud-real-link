@@ -16,14 +16,14 @@ public class ThreadPoolTaskConfig {
         ThreadPoolTaskExecutor threadPoolTaskExecutor = new ThreadPoolTaskExecutor();
         //线程池创建的核⼼线程数，线程池维护线程的最少数，即使没有任务需要执⾏，也会⼀直存活
         //如果设置allowCoreThreadTimeout=true（默认false）时，核⼼线程会超时关闭
-        threadPoolTaskExecutor.setCorePoolSize(32);
+        threadPoolTaskExecutor.setCorePoolSize(16);
         //最⼤线程池数，当线程数>=corePoolSize，且任务队列已满时。线程池会创建新线程来处理任务
         //当线程数=maxPoolSize，且任务队列已满时，线程池会拒绝处理任务⽽抛出异常
         threadPoolTaskExecutor.setMaxPoolSize(64);
         //缓存队列（阻塞队列）当核⼼线程数达到最⼤时，新任务会放在队列中排队等待执⾏
         //阻塞队列在内存中，如果过长，或者宕机，则有可能会发生oom
         //采用异步+阻塞队列存缓存之后，开始的QPS很高，后面降低，是因为阻塞队列满了，PoolSize也满了，进程就会被拒绝，则QPS下降
-        threadPoolTaskExecutor.setQueueCapacity(10000);
+        threadPoolTaskExecutor.setQueueCapacity(1024);
         //当线程空闲时间达到keepAliveTime时，线程会退出，直到线程数=corePoolSize
         //允许线程空闲时间60秒，当maxPoolSize的线程在空闲时间到达的时候销毁
         //如果allowCoreThreadTimeout=true，则会直到线程数=0
