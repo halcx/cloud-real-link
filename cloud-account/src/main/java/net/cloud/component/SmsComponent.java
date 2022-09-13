@@ -2,6 +2,7 @@ package net.cloud.component;
 
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.config.SmsConfig;
+import net.cloud.utils.CommonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
@@ -29,13 +30,19 @@ public class SmsComponent {
      * @param value
      */
     public void send(String to,String templateId,String value){
+
+        long beginTime = CommonUtil.getCurrentTimestamp();
+
         String url = String.format(URL_TEMPLATE,to,templateId,value);
         HttpHeaders httpHeaders = new HttpHeaders();
         //最后在header中的格式(中间是英文空格)为Authorization:APPCODE 83359fd73fe94948385f570e3c139105
         httpHeaders.set("Authorization","APPCODE "+ smsConfig.getAppCode());
         HttpEntity entity = new HttpEntity<>(httpHeaders);
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-        log.info("url={},body={}",url,response.getBody());
+
+        long endTime = CommonUtil.getCurrentTimestamp();
+
+        log.info("ms={},url={},body={}",endTime-beginTime,url,response.getBody());
         if(response.getStatusCode().is2xxSuccessful()){
             log.info("发送短信验证码成功");
         }else {
