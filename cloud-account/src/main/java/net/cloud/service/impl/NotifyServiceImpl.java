@@ -22,7 +22,7 @@ public class NotifyServiceImpl implements NotifyService {
      * 用于测试
      */
     @Override
-    @Async
+    @Async("threadPoolTaskExecutor")
     public void testSend() {
         long beginTime = CommonUtil.getCurrentTimestamp();
         ResponseEntity<String> response = restTemplate.getForEntity("http://old.xdclass.net", String.class);
