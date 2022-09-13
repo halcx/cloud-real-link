@@ -1,4 +1,4 @@
-package enums;
+package net.cloud.enums;
 
 import lombok.Getter;
 

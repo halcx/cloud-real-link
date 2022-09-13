@@ -1,8 +1,8 @@
-package utils;
+package net.cloud.utils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import enums.BizCodeEnum;
+import net.cloud.enums.BizCodeEnum;
 import lombok.*;
 
 @Data

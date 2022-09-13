@@ -1,4 +1,4 @@
-package utils;
+package net.cloud.utils;
 
 import lombok.extern.slf4j.Slf4j;
 

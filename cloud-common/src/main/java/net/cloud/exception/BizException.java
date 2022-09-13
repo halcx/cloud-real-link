@@ -1,6 +1,6 @@
-package exception;
+package net.cloud.exception;
 
-import enums.BizCodeEnum;
+import net.cloud.enums.BizCodeEnum;
 import lombok.Data;
 
 /**
