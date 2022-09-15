@@ -27,7 +27,6 @@ public class CheckUtil {
     }
 
     /**
-     *
      * @param phone
      * @return
      */
@@ -38,6 +37,5 @@ public class CheckUtil {
         Matcher m = PHONE_PATTERN.matcher(phone);
         boolean result = m.matches();
         return result;
-
     }
 }
