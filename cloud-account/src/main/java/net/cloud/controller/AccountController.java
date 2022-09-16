@@ -21,7 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
  * @since 2022-09-07
  */
 @RestController
-@RequestMapping("/api/v1/account")
+@RequestMapping("/api/account/v1")
 public class AccountController {
 
     @Autowired
