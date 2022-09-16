@@ -12,6 +12,7 @@ import net.cloud.model.LoginUser;
 import net.cloud.service.AccountService;
 import net.cloud.service.NotifyService;
 import net.cloud.utils.CommonUtil;
+import net.cloud.utils.JWTUtil;
 import net.cloud.utils.JsonData;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.StringUtils;
@@ -94,9 +95,9 @@ public class AccountServiceImpl implements AccountService {
                 LoginUser loginUser = LoginUser.builder().build();
                 BeanUtils.copyProperties(accountDO,loginUser);
 
-                //TODO 生成TOKEN
-
-                return JsonData.buildSuccess("token");
+                //构建token，并且返回给前端
+                String token = JWTUtil.generateJsonWebToken(loginUser);
+                return JsonData.buildSuccess(token);
             }else {
                 return JsonData.buildResult(BizCodeEnum.ACCOUNT_PWD_ERROR);
             }
