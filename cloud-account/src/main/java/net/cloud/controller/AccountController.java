@@ -49,7 +49,7 @@ public class AccountController {
      * @param registerRequest
      * @return
      */
-    @PostMapping("/request")
+    @PostMapping("/register")
     public JsonData register(@RequestBody AccountRegisterRequest registerRequest){
         JsonData jsonData = accountService.register(registerRequest);
         return jsonData;
