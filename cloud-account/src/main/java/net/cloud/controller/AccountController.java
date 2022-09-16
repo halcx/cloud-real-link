@@ -1,6 +1,7 @@
 package net.cloud.controller;
 
 
+import net.cloud.controller.request.AccountLoginRequest;
 import net.cloud.controller.request.AccountRegisterRequest;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.service.AccountService;
@@ -51,6 +52,17 @@ public class AccountController {
     @PostMapping("/request")
     public JsonData register(@RequestBody AccountRegisterRequest registerRequest){
         JsonData jsonData = accountService.register(registerRequest);
+        return jsonData;
+    }
+
+    /**
+     * 用户登陆接口
+     * @param accountLoginRequest
+     * @return
+     */
+    @PostMapping("/login")
+    public JsonData login(@RequestBody AccountLoginRequest accountLoginRequest){
+        JsonData jsonData = accountService.login(accountLoginRequest);
         return jsonData;
     }
 }

@@ -1,12 +1,14 @@
 package net.cloud.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.controller.request.AccountLoginRequest;
 import net.cloud.controller.request.AccountRegisterRequest;
 import net.cloud.enums.AuthTypeEnum;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.SendCodeEnum;
 import net.cloud.manager.AccountManager;
 import net.cloud.model.AccountDO;
+import net.cloud.model.LoginUser;
 import net.cloud.service.AccountService;
 import net.cloud.service.NotifyService;
 import net.cloud.utils.CommonUtil;
@@ -18,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -54,7 +57,11 @@ public class AccountServiceImpl implements AccountService {
         //创建DO
         AccountDO accountDO = new AccountDO();
         BeanUtils.copyProperties(registerRequest,accountDO);
+        //认证级别
         accountDO.setAuth(AuthTypeEnum.DEFAULT.name());
+
+        //accountNo 唯一索引 TODO
+        accountDO.setAccountNo(CommonUtil.getCurrentTimestamp());
 
         //设置密码 密钥 盐
         accountDO.setSecret("$1$"+CommonUtil.getStringNumRandom(8));
@@ -72,9 +79,37 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
+     * 用户登陆
+     * @param request
+     * @return
+     */
+    @Override
+    public JsonData login(AccountLoginRequest request) {
+        List<AccountDO> accountDOList = accountManager.findByPhone(request.getPhone());
+        if(accountDOList!=null && accountDOList.size()==1){
+            AccountDO accountDO = accountDOList.get(0);
+            String md5Crypt = Md5Crypt.md5Crypt(request.getPwd().getBytes(), accountDO.getSecret());
+            if(md5Crypt.equalsIgnoreCase(accountDO.getPwd())){
+                //登陆成功，构建用户
+                LoginUser loginUser = LoginUser.builder().build();
+                BeanUtils.copyProperties(accountDO,loginUser);
+
+                //TODO 生成TOKEN
+
+                return JsonData.buildSuccess("token");
+            }else {
+                return JsonData.buildResult(BizCodeEnum.ACCOUNT_PWD_ERROR);
+            }
+        }else {
+            return JsonData.buildResult(BizCodeEnum.ACCOUNT_UNREGISTER);
+        }
+    }
+
+    /**
      * 用户初始化发放福利 TODO
      * @param accountDO
      */
     private void userRegisterInitTask(AccountDO accountDO) {
+
     }
 }
