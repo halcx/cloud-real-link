@@ -12,6 +12,7 @@ import net.cloud.model.LoginUser;
 import net.cloud.service.AccountService;
 import net.cloud.service.NotifyService;
 import net.cloud.utils.CommonUtil;
+import net.cloud.utils.IDUtil;
 import net.cloud.utils.JWTUtil;
 import net.cloud.utils.JsonData;
 import org.apache.commons.codec.digest.Md5Crypt;
@@ -61,8 +62,8 @@ public class AccountServiceImpl implements AccountService {
         //认证级别
         accountDO.setAuth(AuthTypeEnum.DEFAULT.name());
 
-        //accountNo 唯一索引 TODO
-        accountDO.setAccountNo(CommonUtil.getCurrentTimestamp());
+        //accountNo 唯一索引,使用我们自己封装的雪花算法
+        accountDO.setAccountNo(Long.parseLong(IDUtil.geneSnowFlakeID().toString()));
 
         //设置密码 密钥 盐
         accountDO.setSecret("$1$"+CommonUtil.getStringNumRandom(8));
