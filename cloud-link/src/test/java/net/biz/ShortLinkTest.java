@@ -1,4 +1,4 @@
-package biz;
+package net.biz;
 
 import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
