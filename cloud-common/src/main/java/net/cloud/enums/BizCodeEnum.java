@@ -16,6 +16,7 @@ public enum BizCodeEnum {
     GROUP_REPEAT(23001,"分组名重复"),
     GROUP_OPER_FAIL(23503,"分组名操作失败"),
     GROUP_NOT_EXIST(23404,"分组不存在"),
+    GROUP_ADD_FAILED(23405,"分组添加失败"),
 
     /**
      *验证码
