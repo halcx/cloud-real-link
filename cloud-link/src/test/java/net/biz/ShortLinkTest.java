@@ -4,11 +4,14 @@ import com.google.common.hash.Hashing;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.LinkApplication;
 import net.cloud.component.ShortLinkComponent;
+import net.cloud.manager.ShortLinkManager;
+import net.cloud.model.ShortLinkDO;
 import net.cloud.utils.CommonUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.stereotype.Component;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Random;
@@ -47,4 +50,30 @@ public class ShortLinkTest {
             log.info("originalUrl:" + originalUrl + ", shortLinkCode=" + shortLinkCode);
         }
     }
+
+    @Autowired
+    private ShortLinkManager shortLinkManager;
+
+    /**
+     * 测试保存短链
+     */
+    @Test
+    public void testSaveShortLink(){
+        Random random = new Random();
+        for (int i = 0; i < 1; i++) {
+            int num1 = random.nextInt(10);
+            int num2 = random.nextInt(1000000);
+            int num3 = random.nextInt(1000000);
+            String originalUrl = num1 + "xdclass" + num2 + ".net" + num3;
+            String shortLinkCode = shortLinkComponent.createShortLinkCode(originalUrl);
+            ShortLinkDO shortLinkDO = new ShortLinkDO();
+            shortLinkDO.setCode(shortLinkCode);
+            shortLinkDO.setAccountNo(Long.valueOf(num3));
+            shortLinkDO.setSign(CommonUtil.MD5(originalUrl));
+            shortLinkDO.setDel(0);
+            shortLinkManager.addShortLink(shortLinkDO);
+        }
+    }
+
+
 }
