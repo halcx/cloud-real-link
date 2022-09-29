@@ -25,7 +25,7 @@ public class ShortLinkAddMappingMQListener {
      */
     @RabbitHandler
     public void shortLinkHandler(EventMessage eventMessage, Message message, Channel channel) throws IOException {
-        log.info("监听到消息ShortLinkAddMappingMQListener message消息内容:{}",message);
+        log.info("监听到消息ShortLinkAddMappingMQListenergit message消息内容:{}",message);
         long tag = message.getMessageProperties().getDeliveryTag();
         try {
             //TODO 处理业务逻辑，消费消息
