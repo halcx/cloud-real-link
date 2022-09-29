@@ -23,6 +23,9 @@ public class ShortLinkAddLinkMQListener {
 
     /**
      * 消费者
+     * 消费者消费异常情况：
+     *      1、业务代码进行重试
+     *      2、组件重试
      * @param eventMessage 消息
      * @param message 原始消息
      * @param channel 信道
@@ -33,6 +36,7 @@ public class ShortLinkAddLinkMQListener {
         long tag = message.getMessageProperties().getDeliveryTag();
         try {
             //TODO 处理业务逻辑，消费消息
+            int i = 1/0;
         }catch (Exception e){
             //处理业务异常，还有进行其他操作，比如记录失败原因
             log.error("消费失败:{}",eventMessage);
@@ -40,6 +44,6 @@ public class ShortLinkAddLinkMQListener {
         }
         log.info("消费成功:{}",eventMessage);
         //确认消息消费成功
-        channel.basicAck(tag,false);
+//        channel.basicAck(tag,false);
     }
 }
