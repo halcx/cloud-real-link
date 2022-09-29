@@ -90,6 +90,11 @@ public enum BizCodeEnum {
     FILE_UPLOAD_USER_IMG_FAIL(700101,"用户头像文件上传失败"),
 
     /**
+     * mq消费异常
+     */
+    MQ_CONSUME_EXCEPTION(900101,"MQ消费异常"),
+
+    /**
      * 数据库路由信息
      */
     DB_ROUTE_NOT_FOUND(800101,"数据库路由未找到");
