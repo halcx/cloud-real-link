@@ -44,7 +44,10 @@ public class LinkApiController {
                 //查找短链
                 ShortLinkVO shortLinkVO = shortLinkService.parseShortLinkCode(shortLinkCode);
                 if(isVisitable(shortLinkVO)){
-                    response.setHeader("Location",shortLinkVO.getOriginalUrl());
+
+                    String originalUrl = CommonUtil.removeUrlPrefix(shortLinkVO.getOriginalUrl());
+
+                    response.setHeader("Location",originalUrl);
                     //302跳转
                     response.setStatus(HttpStatus.FOUND.value());
                 }else {

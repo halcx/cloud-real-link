@@ -17,6 +17,7 @@ public class ShortLinkComponent {
         String code = encodeToBase62(murmurHash32);
 
         //拼接前缀和后缀
+        //随机前缀后缀，会导致同一个原始的url生成的短链不一样
         String shortLinkCode = ShardingDBConfig.getRandomDBPrefix() + code + ShardingTableConfig.getRandomTableSuffix();
         return shortLinkCode;
     }
