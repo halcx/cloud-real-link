@@ -41,9 +41,9 @@ public class ShortLinkAddLinkMQListener {
         log.info("监听到消息ShortLinkAddLinkMQListener message消息内容:{}",message);
 
         try {
+            //业务代码
             eventMessage.setEventMessageType(EventMessageType.SHORT_LINK_ADD_LINK.name());
             shortLinkService.handlerAddShortLink(eventMessage);
-
         }catch (Exception e){
             //处理业务异常，还有进行其他操作，比如记录失败原因
             log.error("消费失败:{}",eventMessage);

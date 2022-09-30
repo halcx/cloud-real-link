@@ -9,12 +9,10 @@ import net.cloud.enums.EventMessageType;
 import net.cloud.enums.ShortLinkStateEnum;
 import net.cloud.interceptor.LoginInterceptor;
 import net.cloud.manager.DomainManager;
+import net.cloud.manager.GroupCodeMappingManager;
 import net.cloud.manager.LinkGroupManager;
 import net.cloud.manager.ShortLinkManager;
-import net.cloud.model.DomainDO;
-import net.cloud.model.EventMessage;
-import net.cloud.model.LinkGroupDO;
-import net.cloud.model.ShortLinkDO;
+import net.cloud.model.*;
 import net.cloud.service.ShortLinkService;
 import net.cloud.utils.CommonUtil;
 import net.cloud.utils.IDUtil;
@@ -48,6 +46,9 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
     @Autowired
     private ShortLinkComponent shortLinkComponent;
+
+    @Autowired
+    private GroupCodeMappingManager groupCodeMappingManager;
 
     /**
      * 解析短链
@@ -84,7 +85,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     }
 
     /**
-     * 短链新增逻辑
+     * 短链新增逻辑 C端
      *
      * 1、判断短链域名是否合法
      * 2、判断著名是否合法
@@ -114,22 +115,49 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         //生成短链码
         String shortLinkCode = shortLinkComponent.createShortLinkCode(shortLinkAddRequest.getOriginalUrl());
 
-        //存储短链码
-        ShortLinkDO shorLinkDo = ShortLinkDO.builder()
-                .accountNo(accountNo)
-                .code(shortLinkCode)
-                .title(shortLinkAddRequest.getTitle())
-                .originalUrl(shortLinkAddRequest.getOriginalUrl())
-                .domain(domainDO.getValue())
-                .groupId(linkGroupDO.getId())
-                .expired(shortLinkAddRequest.getExpired())
-                .sign(originalUrlDigest)
-                .state(ShortLinkStateEnum.ACTIVE.name())
-                .del(0)
-                .build();
+        //TODO 加锁
 
-        shortLinkManager.addShortLink(shorLinkDo);
-        return true;
+        //在数据库里面是否被占用，如果不为空，则已经被占用了
+        ShortLinkDO shortLinkCodeDOInDB = shortLinkManager.findByShortLinkCode(shortLinkCode);
+
+        if(shortLinkCodeDOInDB == null){
+            if(EventMessageType.SHORT_LINK_ADD_LINK.name().equalsIgnoreCase(eventMessageType)){
+                //C 端处理
+                //存储短链码
+                ShortLinkDO shorLinkDo = ShortLinkDO.builder()
+                        .accountNo(accountNo)
+                        .code(shortLinkCode)
+                        .title(shortLinkAddRequest.getTitle())
+                        .originalUrl(shortLinkAddRequest.getOriginalUrl())
+                        .domain(domainDO.getValue())
+                        .groupId(linkGroupDO.getId())
+                        .expired(shortLinkAddRequest.getExpired())
+                        .sign(originalUrlDigest)
+                        .state(ShortLinkStateEnum.ACTIVE.name())
+                        .del(0)
+                        .build();
+
+                shortLinkManager.addShortLink(shorLinkDo);
+                return true;
+            }else if(EventMessageType.SHORT_LINK_ADD_MAPPING.name().equalsIgnoreCase(eventMessageType)){
+                //B 端处理
+                GroupCodeMappingDO groupCodeMappingDO = GroupCodeMappingDO.builder()
+                        .accountNo(accountNo)
+                        .code(shortLinkCode)
+                        .title(shortLinkAddRequest.getTitle())
+                        .originalUrl(shortLinkAddRequest.getOriginalUrl())
+                        .domain(domainDO.getValue())
+                        .groupId(linkGroupDO.getId())
+                        .expired(shortLinkAddRequest.getExpired())
+                        .sign(originalUrlDigest)
+                        .state(ShortLinkStateEnum.ACTIVE.name())
+                        .del(0)
+                        .build();
+                groupCodeMappingManager.add(groupCodeMappingDO);
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
