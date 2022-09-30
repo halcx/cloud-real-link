@@ -1,6 +1,7 @@
 package net.cloud.service;
 
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.model.EventMessage;
 import net.cloud.utils.JsonData;
 import net.cloud.vo.ShortLinkVO;
 
@@ -18,4 +19,11 @@ public interface ShortLinkService {
      * @return
      */
     JsonData createShortLink(ShortLinkAddRequest request);
+
+    /**
+     * 处理新增短链消息
+     * @param eventMessage
+     * @return
+     */
+    boolean handlerAddShortLink(EventMessage eventMessage);
 }

@@ -33,8 +33,7 @@ public class ShortLinkManagerImpl implements ShortLinkManager {
      */
     @Override
     public int del(String shortLinkCode, Long accountNo) {
-        ShortLinkDO shortLinkDO = new ShortLinkDO();
-        shortLinkDO.setDel(1);
+        ShortLinkDO shortLinkDO = ShortLinkDO.builder().del(1).build();
         int rows = shortLinkMapper.update(shortLinkDO, new QueryWrapper<ShortLinkDO>()
                 .eq("code", shortLinkCode)
                 .eq("account_no", accountNo));
