@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -120,6 +121,9 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         //校验组是否合法
         LinkGroupDO linkGroupDO = checkLinkGroup(shortLinkAddRequest.getGroupId(), accountNo);
 
+        //短链码重复标记
+        boolean duplicateCodeFlag = false;
+
         //长链摘要生成
         String originalUrlDigest = CommonUtil.MD5(shortLinkAddRequest.getOriginalUrl());
 
@@ -139,49 +143,86 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
         Long result = redisTemplate.execute(new DefaultRedisScript<>(script, Long.class), Arrays.asList(shortLinkCode), accountNo,100);
 
-        if(EventMessageType.SHORT_LINK_ADD_LINK.name().equalsIgnoreCase(eventMessageType)){
-            //C 端处理
+        //加锁成功
+        if(result>0){
+            if(EventMessageType.SHORT_LINK_ADD_LINK.name().equalsIgnoreCase(eventMessageType)){
+                //C 端处理
 
-            //在数据库里面是否被占用，如果不为空，则已经被占用了
-            ShortLinkDO shortLinkCodeDOInDB = shortLinkManager.findByShortLinkCode(shortLinkCode);
+                //在数据库里面是否被占用，如果不为空，则已经被占用了
+                ShortLinkDO shortLinkCodeDOInDB = shortLinkManager.findByShortLinkCode(shortLinkCode);
+                if(shortLinkCodeDOInDB==null){
+                    //存储短链码
+                    ShortLinkDO shorLinkDo = ShortLinkDO.builder()
+                            .accountNo(accountNo)
+                            .code(shortLinkCode)
+                            .title(shortLinkAddRequest.getTitle())
+                            .originalUrl(shortLinkAddRequest.getOriginalUrl())
+                            .domain(domainDO.getValue())
+                            .groupId(linkGroupDO.getId())
+                            .expired(shortLinkAddRequest.getExpired())
+                            .sign(originalUrlDigest)
+                            .state(ShortLinkStateEnum.ACTIVE.name())
+                            .del(0)
+                            .build();
 
-            //存储短链码
-            ShortLinkDO shorLinkDo = ShortLinkDO.builder()
-                    .accountNo(accountNo)
-                    .code(shortLinkCode)
-                    .title(shortLinkAddRequest.getTitle())
-                    .originalUrl(shortLinkAddRequest.getOriginalUrl())
-                    .domain(domainDO.getValue())
-                    .groupId(linkGroupDO.getId())
-                    .expired(shortLinkAddRequest.getExpired())
-                    .sign(originalUrlDigest)
-                    .state(ShortLinkStateEnum.ACTIVE.name())
-                    .del(0)
-                    .build();
+                    shortLinkManager.addShortLink(shorLinkDo);
+                    return true;
+                }else {
+                    //不为空就重复了
+                    log.error("C端短链码重复：{}",eventMessage);
+                    duplicateCodeFlag = true;
+                }
 
-            shortLinkManager.addShortLink(shorLinkDo);
-            return true;
-        }else if(EventMessageType.SHORT_LINK_ADD_MAPPING.name().equalsIgnoreCase(eventMessageType)){
 
-            //查找短链码是否存在
-            GroupCodeMappingDO groupCodeMappingDOInDB = groupCodeMappingManager.findByCodeAndGroupId(shortLinkCode,linkGroupDO.getId(),accountNo);
+            }else if(EventMessageType.SHORT_LINK_ADD_MAPPING.name().equalsIgnoreCase(eventMessageType)){
 
-            //B 端处理
-            GroupCodeMappingDO groupCodeMappingDO = GroupCodeMappingDO.builder()
-                    .accountNo(accountNo)
-                    .code(shortLinkCode)
-                    .title(shortLinkAddRequest.getTitle())
-                    .originalUrl(shortLinkAddRequest.getOriginalUrl())
-                    .domain(domainDO.getValue())
-                    .groupId(linkGroupDO.getId())
-                    .expired(shortLinkAddRequest.getExpired())
-                    .sign(originalUrlDigest)
-                    .state(ShortLinkStateEnum.ACTIVE.name())
-                    .del(0)
-                    .build();
-            groupCodeMappingManager.add(groupCodeMappingDO);
-            return true;
+                //查找短链码是否存在
+                GroupCodeMappingDO groupCodeMappingDOInDB = groupCodeMappingManager.findByCodeAndGroupId(shortLinkCode,linkGroupDO.getId(),accountNo);
+
+                if(groupCodeMappingDOInDB==null){
+                    //B 端处理
+                    GroupCodeMappingDO groupCodeMappingDO = GroupCodeMappingDO.builder()
+                            .accountNo(accountNo)
+                            .code(shortLinkCode)
+                            .title(shortLinkAddRequest.getTitle())
+                            .originalUrl(shortLinkAddRequest.getOriginalUrl())
+                            .domain(domainDO.getValue())
+                            .groupId(linkGroupDO.getId())
+                            .expired(shortLinkAddRequest.getExpired())
+                            .sign(originalUrlDigest)
+                            .state(ShortLinkStateEnum.ACTIVE.name())
+                            .del(0)
+                            .build();
+                    groupCodeMappingManager.add(groupCodeMappingDO);
+                    return true;
+                }else {
+                    //不为空就重复了
+                    log.error("B端短链码重复：{}",eventMessage);
+                    duplicateCodeFlag = true;
+                }
+            }
+        }else {
+            //加锁失败，自旋100ms，再调用
+            //失败的原因可能是短链码已经被占用了，需要重新生成
+            log.error("加锁失败：{}",eventMessage);
+            try {
+                TimeUnit.MILLISECONDS.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            duplicateCodeFlag = true;
         }
+
+        if(duplicateCodeFlag){
+            //需要重新生成短链，版本号递增
+            String newOriginalVersion = CommonUtil.addUrlPrefixVersion(shortLinkAddRequest.getOriginalUrl());
+            shortLinkAddRequest.setOriginalUrl(newOriginalVersion);
+            eventMessage.setContent(JsonUtil.obj2Json(shortLinkAddRequest));
+            log.warn("短链码保存失败，重新生成:{}",eventMessage);
+            //递归地调用这个方法
+            handlerAddShortLink(eventMessage);
+        }
+
         return false;
     }
 
