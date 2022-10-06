@@ -97,4 +97,15 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
                 .set("state", shortLinkStateEnum.name()));
         return rows;
     }
+
+    @Override
+    public GroupCodeMappingDO findByCodeAndGroupId(String shortLinkCode, Long id, Long accountNo) {
+        GroupCodeMappingDO groupCodeMappingDO = groupCodeMappingMapper.selectOne(new QueryWrapper<GroupCodeMappingDO>()
+                .eq("code", shortLinkCode)
+                //分库id
+                .eq("account_no", accountNo)
+                //分表id
+                .eq("group_id", id));
+        return groupCodeMappingDO;
+    }
 }
