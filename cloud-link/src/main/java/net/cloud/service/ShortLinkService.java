@@ -1,7 +1,9 @@
 package net.cloud.service;
 
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.controller.request.ShortLinkDelRequest;
 import net.cloud.controller.request.ShortLinkPageRequest;
+import net.cloud.controller.request.ShortLinkUpdateRequest;
 import net.cloud.model.EventMessage;
 import net.cloud.utils.JsonData;
 import net.cloud.vo.ShortLinkVO;
@@ -31,4 +33,13 @@ public interface ShortLinkService {
     boolean handlerAddShortLink(EventMessage eventMessage);
 
     Map<String, Object> pageByGroupId(ShortLinkPageRequest request);
+
+    /**
+     * 删除短链
+     * @param request
+     * @return
+     */
+    JsonData del(ShortLinkDelRequest request);
+
+    JsonData update(ShortLinkUpdateRequest request);
 }

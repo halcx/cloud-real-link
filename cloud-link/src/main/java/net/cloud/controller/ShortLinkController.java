@@ -2,7 +2,9 @@ package net.cloud.controller;
 
 
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.controller.request.ShortLinkDelRequest;
 import net.cloud.controller.request.ShortLinkPageRequest;
+import net.cloud.controller.request.ShortLinkUpdateRequest;
 import net.cloud.service.ShortLinkService;
 import net.cloud.utils.JsonData;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +51,28 @@ public class ShortLinkController {
     public JsonData pageByGroupId(@RequestBody ShortLinkPageRequest request){
         Map<String,Object>result = shortLinkService.pageByGroupId(request);
         return JsonData.buildSuccess(result);
+    }
+
+    /**
+     * 删除短链
+     * @param request
+     * @return
+     */
+    @PostMapping("del")
+    public JsonData del(@RequestBody ShortLinkDelRequest request){
+        JsonData jsonData = shortLinkService.del(request);
+        return jsonData;
+    }
+
+    /**
+     * 更新短链
+     * @param request
+     * @return
+     */
+    @PostMapping("update")
+    public JsonData update(@RequestBody ShortLinkUpdateRequest request){
+        JsonData jsonData = shortLinkService.update(request);
+        return jsonData;
     }
 }
 

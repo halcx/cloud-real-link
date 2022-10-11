@@ -4,7 +4,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.cloud.component.ShortLinkComponent;
 import net.cloud.config.RabbitMQConfig;
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.controller.request.ShortLinkDelRequest;
 import net.cloud.controller.request.ShortLinkPageRequest;
+import net.cloud.controller.request.ShortLinkUpdateRequest;
 import net.cloud.enums.DomainTypeEnum;
 import net.cloud.enums.EventMessageType;
 import net.cloud.enums.ShortLinkStateEnum;
@@ -239,6 +241,38 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
         Map<String, Object> result = groupCodeMappingManager.pageShortLinkByGroupId(request.getPage(), request.getSize(), accountNo, request.getGroupId());
         return result;
+    }
+
+    @Override
+    public JsonData update(ShortLinkUpdateRequest request) {
+        Long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+
+        EventMessage eventMessage = EventMessage.builder()
+                .accountNo(accountNo)
+                .content(JsonUtil.obj2Json(request))
+                .messageId(IDUtil.geneSnowFlakeID().toString())
+                .eventMessageType(EventMessageType.SHORT_LINK_UPDATE.name())
+                .build();
+
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getShortLinkEventExchange(),rabbitMQConfig.getShortLinkUpdateRoutingKey(),eventMessage);
+
+        return JsonData.buildSuccess();
+    }
+
+    @Override
+    public JsonData del(ShortLinkDelRequest request) {
+        Long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+
+        EventMessage eventMessage = EventMessage.builder()
+                .accountNo(accountNo)
+                .content(JsonUtil.obj2Json(request))
+                .messageId(IDUtil.geneSnowFlakeID().toString())
+                .eventMessageType(EventMessageType.SHORT_LINK_DEL.name())
+                .build();
+
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getShortLinkEventExchange(),rabbitMQConfig.getShortLinkDelRoutingKey(),eventMessage);
+
+        return JsonData.buildSuccess();
     }
 
     /**
