@@ -32,7 +32,7 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
                 //分库id
                 .eq("account_no", accountNo)
                 //分表id
-                .eq("group_id", groupId));
+                .eq("group_id", groupId).eq("del",0));
         return groupCodeMappingDO;
     }
 
@@ -67,7 +67,7 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
                 //分库id
                 .eq("account_no", accountNo)
                 //分表id
-                .eq("group_id", groupId));
+                .eq("group_id", groupId).eq("del",0));
         Map<String,Object> pageMap = new HashMap<>(3);
         pageMap.put("total_record",groupCodeMappingDOPage.getTotal());
         pageMap.put("total_page",groupCodeMappingDOPage.getPages());
@@ -94,6 +94,7 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
                 .eq("account_no", accountNo)
                 //分表id
                 .eq("group_id", groupId)
+                        .eq("del",0)
                 .set("state", shortLinkStateEnum.name()));
         return rows;
     }
@@ -105,7 +106,7 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
                 //分库id
                 .eq("account_no", accountNo)
                 //分表id
-                .eq("group_id", id));
+                .eq("group_id", id).eq("del",0));
         return groupCodeMappingDO;
     }
 }

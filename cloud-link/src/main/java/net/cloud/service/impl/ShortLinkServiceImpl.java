@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.cloud.component.ShortLinkComponent;
 import net.cloud.config.RabbitMQConfig;
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.controller.request.ShortLinkPageRequest;
 import net.cloud.enums.DomainTypeEnum;
 import net.cloud.enums.EventMessageType;
 import net.cloud.enums.ShortLinkStateEnum;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -224,6 +226,19 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         }
 
         return false;
+    }
+
+    /**
+     * 分页查找
+     * 从B端查找，group_code_mapping
+     * @param request
+     * @return
+     */
+    @Override
+    public Map<String, Object> pageByGroupId(ShortLinkPageRequest request) {
+        long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+        Map<String, Object> result = groupCodeMappingManager.pageShortLinkByGroupId(request.getPage(), request.getSize(), accountNo, request.getGroupId());
+        return result;
     }
 
     /**

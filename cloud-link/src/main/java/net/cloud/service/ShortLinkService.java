@@ -1,9 +1,12 @@
 package net.cloud.service;
 
 import net.cloud.controller.request.ShortLinkAddRequest;
+import net.cloud.controller.request.ShortLinkPageRequest;
 import net.cloud.model.EventMessage;
 import net.cloud.utils.JsonData;
 import net.cloud.vo.ShortLinkVO;
+
+import java.util.Map;
 
 public interface ShortLinkService {
     /**
@@ -26,4 +29,6 @@ public interface ShortLinkService {
      * @return
      */
     boolean handlerAddShortLink(EventMessage eventMessage);
+
+    Map<String, Object> pageByGroupId(ShortLinkPageRequest request);
 }
