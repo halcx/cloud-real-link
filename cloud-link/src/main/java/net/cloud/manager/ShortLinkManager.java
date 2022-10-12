@@ -18,12 +18,11 @@ public interface ShortLinkManager {
     ShortLinkDO findByShortLinkCode(String shortLinkCode);
 
     /**
-     * 删除短链
-     * @param shortLinkCode
-     * @param accountNo
+     * 删除
+     * @param shortLinkDO
      * @return
      */
-    int del(String shortLinkCode,Long accountNo);
+    int del(ShortLinkDO shortLinkDO);
 
     /**
      * 更新

@@ -2,6 +2,7 @@ package net.cloud.manager;
 
 import net.cloud.enums.ShortLinkStateEnum;
 import net.cloud.model.GroupCodeMappingDO;
+import net.cloud.model.ShortLinkDO;
 
 import java.util.Map;
 
@@ -23,13 +24,11 @@ public interface GroupCodeMappingManager {
     int add(GroupCodeMappingDO groupCodeMappingDO);
 
     /**
-     * 根据短链码删除
-     * @param shortLinkCode
-     * @param accountNo 分片
-     * @param groupId 分片
+     * 删除短链
+     * @param groupCodeMappingDO
      * @return
      */
-    int del(String shortLinkCode,Long accountNo,Long groupId);
+    int del(GroupCodeMappingDO groupCodeMappingDO);
 
     /**
      * 分页查找

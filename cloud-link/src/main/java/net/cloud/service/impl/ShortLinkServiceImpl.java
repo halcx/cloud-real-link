@@ -244,7 +244,9 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
             //如果传入参数过多的话，最好用一个对象进行封装
             //C端只需要短链码就可以进入对应的库表
-            ShortLinkDO shortLinkDO = ShortLinkDO.builder().code(request.getCode()).title(request.getTitle()).domain(domainDO.getValue()).build();
+            ShortLinkDO shortLinkDO = ShortLinkDO.builder()
+                    .code(request.getCode()).title(request.getTitle())
+                    .accountNo(accountNo).domain(domainDO.getValue()).build();
 
             int rows = shortLinkManager.update(shortLinkDO);
             log.debug("更新C端短链，rows={}",rows);
@@ -264,6 +266,26 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
     @Override
     public boolean handleDelShortLink(EventMessage eventMessage) {
+        Long accountNo = eventMessage.getAccountNo();
+        String eventMessageType = eventMessage.getEventMessageType();
+
+        ShortLinkDelRequest request = JsonUtil.json2Obj(eventMessage.getContent(), ShortLinkDelRequest.class);
+
+        //C端解析
+        if(EventMessageType.SHORT_LINK_DEL_LINK.name().equalsIgnoreCase(eventMessageType)){
+            ShortLinkDO shortLinkDO = ShortLinkDO.builder().code(request.getCode()).accountNo(accountNo).build();
+            int rows = shortLinkManager.del(shortLinkDO);
+            log.debug("删除C端，rows={}",rows);
+            return true;
+        }else if(EventMessageType.SHORT_LINK_DEL_MAPPING.name().equalsIgnoreCase(eventMessageType)){
+            //B端
+            GroupCodeMappingDO groupCodeMappingDO = GroupCodeMappingDO.builder().id(request.getMappingId())
+                    .accountNo(accountNo).groupId(request.getGroupId()).build();
+            int rows = groupCodeMappingManager.del(groupCodeMappingDO);
+            log.debug("删除B端，rows={}",rows);
+            return true;
+        }
+
         return false;
     }
 

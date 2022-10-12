@@ -44,19 +44,17 @@ public class GroupCodeMappingManagerImpl implements GroupCodeMappingManager {
 
     /**
      * 逻辑删除
-     * @param shortLinkCode
-     * @param accountNo 分片
-     * @param groupId 分片
+     * @param groupCodeMappingDO
      * @return
      */
     @Override
-    public int del(String shortLinkCode, Long accountNo, Long groupId) {
+    public int del(GroupCodeMappingDO groupCodeMappingDO) {
         int rows = groupCodeMappingMapper.update(null, new UpdateWrapper<GroupCodeMappingDO>()
-                .eq("code", shortLinkCode)
+                .eq("id",groupCodeMappingDO.getId())
                 //分库id
-                .eq("account_no", accountNo)
+                .eq("account_no", groupCodeMappingDO.getAccountNo())
                 //分表id
-                .eq("group_id", groupId)
+                .eq("group_id", groupCodeMappingDO.getGroupId())
                 .set("del", 1));
         return rows;
     }
