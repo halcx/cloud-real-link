@@ -232,7 +232,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
     @Override
     public boolean handleUpdateShortLink(EventMessage eventMessage) {
-        long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+        Long accountNo = eventMessage.getAccountNo();
         String messageType = eventMessage.getEventMessageType();
         ShortLinkUpdateRequest request = JsonUtil.json2Obj(eventMessage.getContent(), ShortLinkUpdateRequest.class);
 
