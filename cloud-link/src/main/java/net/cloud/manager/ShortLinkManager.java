@@ -24,4 +24,11 @@ public interface ShortLinkManager {
      * @return
      */
     int del(String shortLinkCode,Long accountNo);
+
+    /**
+     * 更新
+     * @param shortLinkDO
+     * @return
+     */
+    int update(ShortLinkDO shortLinkDO);
 }

@@ -36,7 +36,7 @@ public class ShortLinkAddMappingMQListener {
         try {
             //更改消息类型，区分C端和B端
             eventMessage.setEventMessageType(EventMessageType.SHORT_LINK_ADD_MAPPING.name());
-            shortLinkService.handlerAddShortLink(eventMessage);
+            shortLinkService.handleAddShortLink(eventMessage);
         }catch (Exception e){
             //处理业务异常，还有进行其他操作，比如记录失败原因
             log.error("消费失败:{}",eventMessage);

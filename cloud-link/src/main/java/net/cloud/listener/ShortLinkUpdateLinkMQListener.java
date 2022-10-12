@@ -42,7 +42,7 @@ public class ShortLinkUpdateLinkMQListener {
         try {
             //业务代码
             eventMessage.setEventMessageType(EventMessageType.SHORT_LINK_UPDATE_LINK.name());
-            //TODO
+            shortLinkService.handleUpdateShortLink(eventMessage);
         }catch (Exception e){
             //处理业务异常，还有进行其他操作，比如记录失败原因
             log.error("消费失败:{}",eventMessage);

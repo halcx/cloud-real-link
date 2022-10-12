@@ -115,7 +115,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
      * @return
      */
     @Override
-    public boolean handlerAddShortLink(EventMessage eventMessage) {
+    public boolean handleAddShortLink(EventMessage eventMessage) {
         Long accountNo = eventMessage.getAccountNo();
         String eventMessageType = eventMessage.getEventMessageType();
         //需要把类型转换一下，因为前面给它序列化成为字符串了
@@ -224,9 +224,46 @@ public class ShortLinkServiceImpl implements ShortLinkService {
             eventMessage.setContent(JsonUtil.obj2Json(shortLinkAddRequest));
             log.warn("短链码保存失败，重新生成:{}",eventMessage);
             //递归地调用这个方法
-            handlerAddShortLink(eventMessage);
+            handleAddShortLink(eventMessage);
         }
 
+        return false;
+    }
+
+    @Override
+    public boolean handleUpdateShortLink(EventMessage eventMessage) {
+        long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+        String messageType = eventMessage.getEventMessageType();
+        ShortLinkUpdateRequest request = JsonUtil.json2Obj(eventMessage.getContent(), ShortLinkUpdateRequest.class);
+
+        //校验域名是否合法
+        DomainDO domainDO = checkDomain(request.getDomainType(), request.getDomainId(), accountNo);
+
+        if(EventMessageType.SHORT_LINK_UPDATE_LINK.name().equalsIgnoreCase(messageType)){
+            //C端
+
+            //如果传入参数过多的话，最好用一个对象进行封装
+            //C端只需要短链码就可以进入对应的库表
+            ShortLinkDO shortLinkDO = ShortLinkDO.builder().code(request.getCode()).title(request.getTitle()).domain(domainDO.getValue()).build();
+
+            int rows = shortLinkManager.update(shortLinkDO);
+            log.debug("更新C端短链，rows={}",rows);
+            return true;
+        }else if (EventMessageType.SHORT_LINK_UPDATE_MAPPING.name().equalsIgnoreCase(messageType)){
+            //B端
+            //B端需要account_no和group_id
+            GroupCodeMappingDO groupCodeMappingDO = GroupCodeMappingDO.builder().id(request.getMappingId()).groupId(request.getGroupId()).accountNo(accountNo)
+                    .title(request.getTitle()).domain(domainDO.getValue()).build();
+            int rows = groupCodeMappingManager.update(groupCodeMappingDO);
+            log.debug("更新B端短链，rows={}",rows);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean handleDelShortLink(EventMessage eventMessage) {
         return false;
     }
 

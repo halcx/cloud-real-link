@@ -25,13 +25,6 @@ public interface ShortLinkService {
      */
     JsonData createShortLink(ShortLinkAddRequest request);
 
-    /**
-     * 处理新增短链消息
-     * @param eventMessage
-     * @return
-     */
-    boolean handlerAddShortLink(EventMessage eventMessage);
-
     Map<String, Object> pageByGroupId(ShortLinkPageRequest request);
 
     /**
@@ -42,4 +35,25 @@ public interface ShortLinkService {
     JsonData del(ShortLinkDelRequest request);
 
     JsonData update(ShortLinkUpdateRequest request);
+
+    /**
+     * 处理新增短链消息
+     * @param eventMessage
+     * @return
+     */
+    boolean handleAddShortLink(EventMessage eventMessage);
+
+    /**
+     * 处理更新短链消息
+     * @param eventMessage
+     * @return
+     */
+    boolean handleUpdateShortLink(EventMessage eventMessage);
+
+    /**
+     * 处理删除短链消息
+     * @param eventMessage
+     * @return
+     */
+    boolean handleDelShortLink(EventMessage eventMessage);
 }
