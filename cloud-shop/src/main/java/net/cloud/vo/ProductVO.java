@@ -1,13 +1,14 @@
-package net.cloud.model;
+package net.cloud.vo;
 
-import java.math.BigDecimal;
-import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.IdType;
-import java.util.Date;
 import com.baomidou.mybatisplus.annotation.TableId;
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.Date;
 
 /**
  * <p>
@@ -19,12 +20,8 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-@TableName("product")
-public class ProductDO implements Serializable {
+public class ProductVO {
 
-    private static final long serialVersionUID = 1L;
-
-    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
 
     /**
@@ -76,10 +73,4 @@ public class ProductDO implements Serializable {
      * 有效天数
      */
     private Integer validDay;
-
-    private Date gmtModified;
-
-    private Date gmtCreate;
-
-
 }
