@@ -69,7 +69,7 @@ public class MyBatisPlusGenerator {
 
                 // 生成的表, 支持多表一起生成，以数组形式填写
                 //TODO  TODO  TODO  TODO
-                .setInclude("product");
+                .setInclude("product_order");
 
         //4. 包名策略配置
         PackageConfig pkConfig = new PackageConfig();
