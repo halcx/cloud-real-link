@@ -77,4 +77,13 @@ public class ProductOrderManagerImpl implements ProductOrderManager {
 
         return pageMap;
     }
+
+    @Override
+    public int del(Long productOrderId, Long accountNo) {
+        int update = productOrderMapper.update(null, new UpdateWrapper<ProductOrderDO>()
+                .eq("id", productOrderId)
+                .eq("account_no", accountNo)
+                .set("del",1));
+        return update;
+    }
 }
