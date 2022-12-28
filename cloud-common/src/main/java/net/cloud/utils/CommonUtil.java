@@ -173,6 +173,22 @@ public class CommonUtil {
     }
 
     /**
+     * 响应html数据给前端
+     *
+     * @param response
+     * @param jsonData
+     */
+    public static void sendHtmlMessage(HttpServletResponse response, JsonData jsonData) {
+        response.setContentType("text/html; charset=utf-8");
+        try (PrintWriter writer = response.getWriter()) {
+            writer.write(jsonData.getData().toString());
+            writer.flush();
+        } catch (IOException e) {
+            log.warn("响应html数据给前端异常:{}",e);
+        }
+    }
+
+    /**
      * 生成MurmurHash32
      * @param param
      * @return
