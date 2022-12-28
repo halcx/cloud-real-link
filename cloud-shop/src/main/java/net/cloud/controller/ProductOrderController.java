@@ -2,19 +2,23 @@ package net.cloud.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.constant.RedisKey;
 import net.cloud.controller.request.ConfirmOrderRequest;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.ClientTypeEnum;
 import net.cloud.enums.ProductOrderPayEnum;
+import net.cloud.interceptor.LoginInterceptor;
 import net.cloud.service.ProductOrderService;
 import net.cloud.utils.CommonUtil;
 import net.cloud.utils.JsonData;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -31,6 +35,25 @@ public class ProductOrderController {
 
     @Autowired
     private ProductOrderService productOrderService;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+
+
+    /**
+     * 第一次请求的时候构建并且返回回去令牌，用于防止重复提交
+     * @return
+     */
+    @GetMapping("token")
+    public JsonData getOrderToken(){
+        long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
+        String token = CommonUtil.getStringNumRandom(32);
+        String key = String.format(RedisKey.SUBMIT_ORDER_TOKEN_KEY, accountNo, token);
+        //令牌有效时间为30min
+        redisTemplate.opsForValue().set(key, String.valueOf(Thread.currentThread().getId()),30, TimeUnit.MINUTES);
+
+        return JsonData.buildSuccess(token);
+    }
 
     @GetMapping("page")
     public JsonData page(
