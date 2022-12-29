@@ -13,6 +13,8 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -33,6 +35,9 @@ public class RepeatSubmitAspect {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     /**
      * 定义PointCut表达式：
@@ -87,7 +92,11 @@ public class RepeatSubmitAspect {
             String key = String.format("%s-%s-%s-%s",ipAddr,name,method,accountNo);
 
             //加锁
-            res = redisTemplate.opsForValue().setIfAbsent(key,"1",lockTime, TimeUnit.SECONDS);
+            //res = redisTemplate.opsForValue().setIfAbsent(key,"1",lockTime, TimeUnit.SECONDS);
+            // 分布式锁
+            RLock lock = redissonClient.getLock(key);
+            // 尝试加锁，最多等待2秒，上锁以后5秒自动解锁 [lockTime默认为5s, 可以自定义] 自旋
+            res = lock.tryLock(2, lockTime, TimeUnit.SECONDS);
         }else {
             //方式二：令牌形式防重复提交
             String requestToken = request.getHeader("request-token");
