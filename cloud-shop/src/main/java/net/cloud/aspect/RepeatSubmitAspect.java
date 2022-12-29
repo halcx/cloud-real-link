@@ -89,7 +89,7 @@ public class RepeatSubmitAspect {
             String name = method.getDeclaringClass().getName();
 
             //构建key
-            String key = String.format("%s-%s-%s-%s",ipAddr,name,method,accountNo);
+            String key = "order-server:repeat_submit:"+CommonUtil.MD5(String.format("%s-%s-%s-%s",ipAddr,name,method,accountNo));
 
             //加锁
             //res = redisTemplate.opsForValue().setIfAbsent(key,"1",lockTime, TimeUnit.SECONDS);

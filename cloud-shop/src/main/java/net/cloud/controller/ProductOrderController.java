@@ -58,7 +58,6 @@ public class ProductOrderController {
     }
 
     @RequestMapping("page")
-    @RepeatSubmit(limitType = RepeatSubmit.Type.TOKEN)
     public JsonData page(@RequestBody ProductOrderPageRequest productOrderPageRequest){
         Map<String,Object> pageResult = productOrderService.page(productOrderPageRequest);
         return JsonData.buildSuccess(pageResult);
@@ -84,6 +83,7 @@ public class ProductOrderController {
      * @param response
      */
     @PostMapping("confirm")
+//    @RepeatSubmit(limitType = RepeatSubmit.Type.PARAM)
     public void confirmOrder(@RequestBody ConfirmOrderRequest request, HttpServletResponse response){
         JsonData jsonData = productOrderService.confirmOrder(request);
         if(jsonData.getCode()==0){
