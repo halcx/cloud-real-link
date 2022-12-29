@@ -6,11 +6,13 @@ import net.cloud.constant.RedisKey;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.exception.BizException;
 import net.cloud.interceptor.LoginInterceptor;
+import net.cloud.utils.CommonUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 切面类，防止重复提交
@@ -65,7 +69,25 @@ public class RepeatSubmitAspect {
         String type = repeatSubmit.limitType().name();
 
         if(type.equalsIgnoreCase(RepeatSubmit.Type.PARAM.name())){
-            //方式一：参数形式防重复提交 TODO
+            //方式一：参数形式防重复提交
+            long lockTime = repeatSubmit.lockTime();
+
+            String ipAddr = CommonUtil.getIpAddr(request);
+
+            //拿到方法签名
+            MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+
+            //拿到方法
+            Method method = methodSignature.getMethod();
+
+            //拿到类名
+            String name = method.getDeclaringClass().getName();
+
+            //构建key
+            String key = String.format("%s-%s-%s-%s",ipAddr,name,method,accountNo);
+
+            //加锁
+            res = redisTemplate.opsForValue().setIfAbsent(key,"1",lockTime, TimeUnit.SECONDS);
         }else {
             //方式二：令牌形式防重复提交
             String requestToken = request.getHeader("request-token");
