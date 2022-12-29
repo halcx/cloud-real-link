@@ -3,6 +3,7 @@ package net.cloud.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.constant.TimeConstant;
 import net.cloud.controller.request.ConfirmOrderRequest;
+import net.cloud.controller.request.ProductOrderPageRequest;
 import net.cloud.enums.BillTypeEnum;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.ProductOrderPayEnum;
@@ -38,9 +39,12 @@ public class ProductOrderServiceImpl implements ProductOrderService {
     private ProductManager productManager;
 
     @Override
-    public Map<String, Object> page(int page, int size, String state) {
+    public Map<String, Object> page(ProductOrderPageRequest productOrderPageRequest) {
         long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
-        Map<String, Object> pageResult = productOrderManager.page(page, size, accountNo, state);
+        Map<String, Object> pageResult = productOrderManager.page(
+                productOrderPageRequest.getPage(), productOrderPageRequest.getSize()
+                , accountNo,
+                productOrderPageRequest.getState());
         return pageResult;
     }
 

@@ -2,8 +2,10 @@ package net.cloud.controller;
 
 
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.annotation.RepeatSubmit;
 import net.cloud.constant.RedisKey;
 import net.cloud.controller.request.ConfirmOrderRequest;
+import net.cloud.controller.request.ProductOrderPageRequest;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.ClientTypeEnum;
 import net.cloud.enums.ProductOrderPayEnum;
@@ -55,13 +57,10 @@ public class ProductOrderController {
         return JsonData.buildSuccess(token);
     }
 
-    @GetMapping("page")
-    public JsonData page(
-            @RequestParam(value = "page",defaultValue = "1") int page,
-            @RequestParam(value = "size",defaultValue = "10") int size,
-            @RequestParam(value = "state",required = false) String state
-    ){
-        Map<String,Object> pageResult = productOrderService.page(page,size,state);
+    @RequestMapping("page")
+    @RepeatSubmit(limitType = RepeatSubmit.Type.TOKEN)
+    public JsonData page(@RequestBody ProductOrderPageRequest productOrderPageRequest){
+        Map<String,Object> pageResult = productOrderService.page(productOrderPageRequest);
         return JsonData.buildSuccess(pageResult);
     }
 
