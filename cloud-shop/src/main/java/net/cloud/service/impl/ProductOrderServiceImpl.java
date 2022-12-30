@@ -1,17 +1,16 @@
 package net.cloud.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.config.RabbitMQConfig;
 import net.cloud.constant.TimeConstant;
 import net.cloud.controller.request.ConfirmOrderRequest;
 import net.cloud.controller.request.ProductOrderPageRequest;
-import net.cloud.enums.BillTypeEnum;
-import net.cloud.enums.BizCodeEnum;
-import net.cloud.enums.ProductOrderPayEnum;
-import net.cloud.enums.ProductOrderStateEnum;
+import net.cloud.enums.*;
 import net.cloud.exception.BizException;
 import net.cloud.interceptor.LoginInterceptor;
 import net.cloud.manager.ProductManager;
 import net.cloud.manager.ProductOrderManager;
+import net.cloud.model.EventMessage;
 import net.cloud.model.LoginUser;
 import net.cloud.model.ProductDO;
 import net.cloud.model.ProductOrderDO;
@@ -20,6 +19,7 @@ import net.cloud.utils.CommonUtil;
 import net.cloud.utils.JsonData;
 import net.cloud.utils.JsonUtil;
 import net.cloud.vo.PayInfoVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,6 +37,12 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private ProductManager productManager;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RabbitMQConfig rabbitMQConfig;
 
     @Override
     public Map<String, Object> page(ProductOrderPageRequest productOrderPageRequest) {
@@ -100,11 +106,16 @@ public class ProductOrderServiceImpl implements ProductOrderService {
                 .payFee(request.getPayAmount())
                 .orderPayTimeoutMills(TimeConstant.ORDER_PAY_TIMEOUT_MILLS).build();
 
-        //TODO 发送延迟消息 用于关单
+        //发送延迟消息 用于关单
+        EventMessage eventMessage = EventMessage.builder().eventMessageType(EventMessageType.PRODUCT_ORDER_NEW.name())
+                .accountNo(loginUser.getAccountNo())
+                .bizId(orderOutTradeNum).build();
+
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getOrderEventExchange(),rabbitMQConfig.getOrderCloseDelayRoutingKey(),eventMessage);
 
         //TODO 调用支付信息
 
-        return null;
+        return JsonData.buildSuccess();
     }
 
     private ProductOrderDO saveProductOrder(ConfirmOrderRequest request, LoginUser loginUser, String orderOutTradeNum, ProductDO productDO) {
