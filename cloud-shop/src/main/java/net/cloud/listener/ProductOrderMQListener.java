@@ -1,5 +1,6 @@
 package net.cloud.listener;
 
+import com.rabbitmq.client.Channel;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.exception.BizException;
@@ -12,7 +13,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.nio.channels.Channel;
+import java.io.IOException;
 
 @Component
 @Slf4j
@@ -24,18 +25,17 @@ public class ProductOrderMQListener {
 
 
     @RabbitHandler
-    public void productOrderHandler(EventMessage eventMessage, Message message, Channel channel){
-        log.info("监听到消息ProductOrderMQListener:{}",message);
-
+    public void productOrderHandler(EventMessage eventMessage, Message message, Channel channel) throws IOException {
+        log.info("监听到消息ProductOrderMQListener message消息内容:{}", message);
         try {
-            //TODO 业务内容
+            //关闭订单
+            productOrderService.closeProductOrder(eventMessage);
 
-
-        }catch (Exception exception){
-            log.error("消费者消费失败:{}",eventMessage);
+        } catch (Exception e) {
+            //处理业务异常，还有进⾏其他操作，⽐如记录失败原因
+            log.error("消费失败:{}", eventMessage);
             throw new BizException(BizCodeEnum.MQ_CONSUME_EXCEPTION);
         }
-
-        log.info("消费成功:{}",eventMessage);
+        log.info("消费成功:{}", eventMessage);
     }
 }

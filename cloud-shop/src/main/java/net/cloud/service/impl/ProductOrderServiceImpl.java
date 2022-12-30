@@ -19,6 +19,7 @@ import net.cloud.utils.CommonUtil;
 import net.cloud.utils.JsonData;
 import net.cloud.utils.JsonUtil;
 import net.cloud.vo.PayInfoVO;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -116,6 +117,64 @@ public class ProductOrderServiceImpl implements ProductOrderService {
         //TODO 调用支付信息
 
         return JsonData.buildSuccess();
+    }
+
+    /**
+     * 延迟消息的时间，需要比订单过期时间长一点，这样就不存在查询的时候，用户还能支付成功
+     *
+     * 查询订单是否存在，如果已经支付，则正常结束
+     * 如果订单未支付，主动调用第三方支付平台查询订单状态
+     * - 确认未支付，本地取消订单
+     * - 如果第三方已经支付，主动的把订单状态改成已经支付，这种情况的原因可能是支付通道回调有问题。然后我们要触发支付后的动作。
+     * - 如何触发呢？RPC还是？
+     * @param eventMessage
+     * @return
+     */
+    @Override
+    public boolean closeProductOrder(EventMessage eventMessage) {
+        String outTradeNo = eventMessage.getBizId();
+        Long accountNo = eventMessage.getAccountNo();
+        //判断订单是否存在
+        ProductOrderDO productOrderDO = productOrderManager.findByOutTradeNoAndAccountNo(outTradeNo, accountNo);
+
+        if(productOrderDO==null){
+            //订单不存在
+            log.warn("订单不存在");
+            return true;
+        }
+
+        if(productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.PAY.name())){
+            //已经支付
+            log.info("直接确认消息，订单已经支付:{}",eventMessage);
+            return true;
+        }
+
+        //未支付
+        if(productOrderDO.getState().equalsIgnoreCase(ProductOrderStateEnum.NEW.name())){
+            //向第三方查询状态
+            PayInfoVO payInfoVO = new PayInfoVO();
+            payInfoVO.setPayType(productOrderDO.getPayType());
+            payInfoVO.setOutTradeNo(outTradeNo);
+            payInfoVO.setAccountNo(accountNo);
+            //TODO 去第三方平台查询
+
+            String payResult = "";
+
+            if(StringUtils.isBlank(payResult)){
+                //如果为空，则未支付成功，取消本地的订单
+                productOrderManager.updateOrderPayState(outTradeNo,accountNo,
+                        ProductOrderStateEnum.CANCEL.name(),ProductOrderStateEnum.NEW.name());
+                log.info("未支付成功，本地取消订单:{}",eventMessage);
+            }else {
+                //支付成功，主动把订单状态更新成支付
+                log.warn("支付成功，但是微信回调通知失败，需要排查问题:{}",eventMessage);
+                productOrderManager.updateOrderPayState(outTradeNo,accountNo,
+                        ProductOrderStateEnum.PAY.name(),ProductOrderStateEnum.NEW.name());
+                //TODO 触发支付成功后的逻辑
+            }
+        }
+
+        return true;
     }
 
     private ProductOrderDO saveProductOrder(ConfirmOrderRequest request, LoginUser loginUser, String orderOutTradeNum, ProductDO productDO) {

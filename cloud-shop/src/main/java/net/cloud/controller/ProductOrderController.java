@@ -85,6 +85,7 @@ public class ProductOrderController {
     @PostMapping("confirm")
 //    @RepeatSubmit(limitType = RepeatSubmit.Type.PARAM)
     public void confirmOrder(@RequestBody ConfirmOrderRequest request, HttpServletResponse response){
+        log.info("111");
         JsonData jsonData = productOrderService.confirmOrder(request);
         if(jsonData.getCode()==0){
             //端类型
