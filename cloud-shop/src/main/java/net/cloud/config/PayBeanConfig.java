@@ -77,7 +77,7 @@ public class PayBeanConfig {
      * 获取http请求对象
      * @return
      */
-    @Bean("getWechatPayClient")
+    @Bean("wechatPayClient")
     public CloseableHttpClient getWechatPayClient(ScheduledUpdateCertificatesVerifier verifier) throws IOException {
         WechatPayHttpClientBuilder builder = WechatPayHttpClientBuilder.create()
                 .withMerchant(payConfig.getMchId(), payConfig.getMchSerialNo(), getPrivateKey())
