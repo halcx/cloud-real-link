@@ -9,6 +9,7 @@ import net.cloud.manager.ProductOrderManager;
 import net.cloud.model.ProductOrderDO;
 import net.cloud.utils.CommonUtil;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -94,6 +95,53 @@ public class WechatPayTest {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    @Test
+    public void testWeChatQuery() {
+        String outTradNo = "FW7xTBxN8TNp5gZa0g048mXIVgqppl9X";
+
+        String url = String.format(WechatPayApi.NATIVE_QUERY, outTradNo, payConfig.getMchId());
+
+        HttpGet httpGet = new HttpGet(url);
+        httpGet.setHeader("Accept","application/json");
+
+        try(CloseableHttpResponse closeableHttpResponse = wechatPayClient.execute(httpGet)) {
+            int statusCode = closeableHttpResponse.getStatusLine().getStatusCode();
+            //响应体
+            String responseStr = EntityUtils.toString(closeableHttpResponse.getEntity());
+
+            log.info("查询响应码：{},响应体：{}",statusCode,responseStr);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    public void testWeChatClose() throws JSONException {
+        String outTradNo = "FW7xTBxN8TNp5gZa0g048mXIVgqppl9X";
+
+        JSONObject payObj = new JSONObject();
+        payObj.put("mchid",payConfig.getMchId());
+
+        String body = payObj.toString();
+
+        StringEntity entity = new StringEntity(body,"utf-8");
+        entity.setContentType("application/json");
+
+        String url = String.format(WechatPayApi.NATIVE_CLOSE, outTradNo);
+
+        HttpPost httpPost = new HttpPost(url);
+        httpPost.setHeader("Accept","application/json");
+        httpPost.setEntity(entity);
+
+
+        try(CloseableHttpResponse closeableHttpResponse = wechatPayClient.execute(httpPost)) {
+            int statusCode = closeableHttpResponse.getStatusLine().getStatusCode();
+
+            log.info("关闭订单响应码：{}",statusCode);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
