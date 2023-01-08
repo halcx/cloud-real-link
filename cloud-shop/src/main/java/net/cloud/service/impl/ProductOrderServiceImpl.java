@@ -1,6 +1,7 @@
 package net.cloud.service.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.component.PayFactory;
 import net.cloud.config.RabbitMQConfig;
 import net.cloud.constant.TimeConstant;
 import net.cloud.controller.request.ConfirmOrderRequest;
@@ -20,6 +21,8 @@ import net.cloud.utils.JsonData;
 import net.cloud.utils.JsonUtil;
 import net.cloud.vo.PayInfoVO;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.kafka.common.protocol.types.Field;
+import org.json.JSONException;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 
 import java.math.BigDecimal;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 @Service
@@ -44,6 +48,9 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
     @Autowired
     private RabbitMQConfig rabbitMQConfig;
+
+    @Autowired
+    private PayFactory payFactory;
 
     @Override
     public Map<String, Object> page(ProductOrderPageRequest productOrderPageRequest) {
@@ -83,7 +90,7 @@ public class ProductOrderServiceImpl implements ProductOrderService {
      * @return
      */
     @Override
-    public JsonData confirmOrder(ConfirmOrderRequest request) {
+    public JsonData confirmOrder(ConfirmOrderRequest request) throws JSONException {
 
         LoginUser loginUser = LoginInterceptor.threadLocal.get();
         //随机获取32位订单号
@@ -114,9 +121,16 @@ public class ProductOrderServiceImpl implements ProductOrderService {
 
         rabbitTemplate.convertAndSend(rabbitMQConfig.getOrderEventExchange(),rabbitMQConfig.getOrderCloseDelayRoutingKey(),eventMessage);
 
-        //TODO 调用支付信息
+        //调用支付信息
+        String codeUrl = payFactory.pay(payInfoVO);
+        if(StringUtils.isNotBlank(codeUrl)){
+            Map<String,String> resultMap = new HashMap<>(2);
+            resultMap.put("code_url",codeUrl);
+            resultMap.put("out_trade_no",payInfoVO.getOutTradeNo());
+            return JsonData.buildSuccess(resultMap);
+        }
 
-        return JsonData.buildSuccess();
+        return JsonData.buildResult(BizCodeEnum.PAY_ORDER_FAIL);
     }
 
     /**

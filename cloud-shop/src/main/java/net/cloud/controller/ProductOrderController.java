@@ -14,6 +14,7 @@ import net.cloud.service.ProductOrderService;
 import net.cloud.utils.CommonUtil;
 import net.cloud.utils.JsonData;
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
@@ -84,7 +85,7 @@ public class ProductOrderController {
      */
     @PostMapping("confirm")
 //    @RepeatSubmit(limitType = RepeatSubmit.Type.PARAM)
-    public void confirmOrder(@RequestBody ConfirmOrderRequest request, HttpServletResponse response){
+    public void confirmOrder(@RequestBody ConfirmOrderRequest request, HttpServletResponse response) throws JSONException {
         log.info("111");
         JsonData jsonData = productOrderService.confirmOrder(request);
         if(jsonData.getCode()==0){

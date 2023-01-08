@@ -1,6 +1,7 @@
 package net.cloud.component;
 
 import net.cloud.vo.PayInfoVO;
+import org.json.JSONException;
 
 public class PayStrategyContext {
 
@@ -15,7 +16,7 @@ public class PayStrategyContext {
      * @param payInfoVO
      * @return
      */
-    public String executeUnifiedOrder(PayInfoVO payInfoVO){
+    public String executeUnifiedOrder(PayInfoVO payInfoVO) throws JSONException {
         return payStrategy.unifiedOrder(payInfoVO);
     }
 

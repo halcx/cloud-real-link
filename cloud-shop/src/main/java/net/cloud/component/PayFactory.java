@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.cloud.enums.ProductOrderPayEnum;
 import net.cloud.enums.ProductOrderStateEnum;
 import net.cloud.vo.PayInfoVO;
+import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -22,7 +23,7 @@ public class PayFactory {
      * @param payInfoVO
      * @return
      */
-    public String pay(PayInfoVO payInfoVO){
+    public String pay(PayInfoVO payInfoVO) throws JSONException {
         String payType = payInfoVO.getPayType();
         if(ProductOrderPayEnum.ALI_PAY.name().equalsIgnoreCase(payType)){
             //微信支付
