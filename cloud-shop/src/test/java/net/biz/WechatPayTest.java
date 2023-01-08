@@ -144,4 +144,9 @@ public class WechatPayTest {
             e.printStackTrace();
         }
     }
+
+    @Test
+    public void testWechatRefund(){
+
+    }
 }
