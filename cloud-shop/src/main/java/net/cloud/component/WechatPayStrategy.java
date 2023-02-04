@@ -1,6 +1,5 @@
 package net.cloud.component;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONException;
 import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
@@ -144,7 +143,6 @@ public class WechatPayStrategy implements PayStrategy{
                 result = "CLOSE_SUCCESS";
             }
             log.debug("关闭订单响应码：{}",statusCode);
-
 
         } catch (IOException e) {
             e.printStackTrace();
