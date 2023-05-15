@@ -5,6 +5,7 @@ import com.wechat.pay.contrib.apache.httpclient.auth.ScheduledUpdateCertificates
 import com.wechat.pay.contrib.apache.httpclient.util.AesUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.config.WechatPayConfig;
+import net.cloud.enums.ProductOrderPayEnum;
 import net.cloud.service.ProductOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -72,7 +73,9 @@ public class PayCallbackController {
                 log.info("解密后的明文:{}",plainBody);
                 //转换成map
                 Map<String, String> paramsMap = convertWechatPayMsgToMap(plainBody);
-                //TODO 处理业务逻辑
+                //处理业务逻辑
+
+                productOrderService.processOrderCallbackMsg(ProductOrderPayEnum.WECHAT_PAY,paramsMap);
 
                 //响应微信
                 map.put("code","SUCCESS");
@@ -112,13 +115,7 @@ public class PayCallbackController {
         AesUtil aesUtil = new AesUtil(wechatPayConfig.getApiV3Key().getBytes(StandardCharsets.UTF_8));
         JSONObject obj = JSONObject.parseObject(requestBody);
         JSONObject resource = obj.getJSONObject("resource");
-//        "resource": {
-//            "original_type": "transaction",
-//                    "algorithm": "AEAD_AES_256_GCM",
-//                    "ciphertext": "",
-//                    "associated_data": "",
-//                    "nonce": ""
-//        }
+
         String ciphertext = resource.getString("ciphertext");
         String associatedData = resource.getString("associated_data");
         String nonce = resource.getString("nonce");
