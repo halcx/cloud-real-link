@@ -9,6 +9,7 @@ import net.cloud.service.ProductOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -48,6 +49,7 @@ public class PayCallbackController {
      * @return
      */
     @RequestMapping("wechat")
+    @ResponseBody
     public Map<String,String> wechatPayCallback(HttpServletResponse response, HttpServletRequest request) throws IOException {
 
         //随机串
@@ -66,7 +68,6 @@ public class PayCallbackController {
             //验证签名是否通过
             boolean result = verifySign(wechatPaySerial,signStr,wechatPaySignature);
             if(result){
-                //TODO 解密数据
                 String plainBody = decryptBody(requestBody);
                 log.info("解密后的明文:{}",plainBody);
                 //转换成map
@@ -96,7 +97,7 @@ public class PayCallbackController {
         //商户订单号
         paramsMap.put("out_trade_no",jsonObject.getString("out_trade_no"));
         //交易状态
-        paramsMap.put("trade_status",jsonObject.getString("trade_status"));
+        paramsMap.put("trade_state",jsonObject.getString("trade_state"));
         //附加数据
         paramsMap.put("account_no",jsonObject.getJSONObject("attach").getString("accountNo"));
         return paramsMap;

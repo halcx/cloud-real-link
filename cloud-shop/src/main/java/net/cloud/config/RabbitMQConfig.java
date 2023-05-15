@@ -120,4 +120,66 @@ public class RabbitMQConfig {
                 null);
     }
 
+
+    //=====================订单支付成功配置======================
+    /**
+     * 更新订单队列
+     */
+    private String orderUpdateQueue = "order.update.queue";
+
+    /**
+     * 订单发送流量包 队列
+     */
+    private String orderTrafficQueue = "order.traffic.queue";
+
+    /**
+     *  微信回掉发送通知的routing key 发送消息用的
+     */
+    private String orderUpdateTrafficRoutingKey = "order.update.traffic.routing.key";
+
+    /**
+     * topic类型的 用于绑定订单队列和交换机
+     */
+    private String orderUpdateBindingKey = "order.update.*.routing.key";
+
+    /**
+     * topic类型的 用于绑定流量包队列和交换机
+     */
+    private String orderTrafficBindingKey = "order.traffic.*.routing.key";
+
+    /**
+     * 订单更新队列和交换机建立绑定关系
+     * @return
+     */
+    @Bean
+    public Binding orderUpdateBinding(){
+        return new Binding(orderUpdateQueue,Binding.DestinationType.QUEUE,orderEventExchange,orderUpdateBindingKey,null);
+    }
+
+    /**
+     * 订单流量包队列和交换机建立绑定关系
+     * @return
+     */
+    @Bean
+    public Binding orderTrafficBinding(){
+        return new Binding(orderTrafficQueue,Binding.DestinationType.QUEUE,orderEventExchange,orderTrafficBindingKey,null);
+    }
+
+    /**
+     * 普通队列，用于监听更新数据库操作的队列
+     * @return
+     */
+    @Bean
+    public Queue orderUpdateQueue(){
+        return new Queue(orderUpdateQueue,true,false,false);
+    }
+
+    /**
+     * 普通队列，用于监听发放流量包队列
+     * @return
+     */
+    @Bean
+    public Queue orderTrafficQueue(){
+        return new Queue(orderTrafficQueue,true,false,false);
+    }
 }
