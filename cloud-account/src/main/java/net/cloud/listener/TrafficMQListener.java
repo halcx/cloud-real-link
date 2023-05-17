@@ -8,19 +8,22 @@ import net.cloud.model.EventMessage;
 import net.cloud.service.TrafficService;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.Queue;
+import org.springframework.amqp.rabbit.annotation.RabbitHandler;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 @RabbitListener(queuesToDeclare = {
-        @Queue("order.traffic.queue")
+        @Queue("order.traffic.queue"),
+        @Queue("traffic.free_init.queue")
 })
 @Slf4j
 public class TrafficMQListener {
     @Autowired
     private TrafficService trafficService;
 
+    @RabbitHandler
     public void trafficHandler(EventMessage eventMessage, Message message, Channel channel){
         log.info("监听到消息trafficHandler:{}",eventMessage);
         try {

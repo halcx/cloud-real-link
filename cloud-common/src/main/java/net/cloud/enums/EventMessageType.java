@@ -55,5 +55,10 @@ public enum EventMessageType {
     /**
      * 订单支付
      */
-    PRODUCT_ORDER_PAY;
+    PRODUCT_ORDER_PAY,
+
+    /**
+     * 初始免费流量包发放消息
+     */
+    TRAFFIC_FREE_INIT;
 }

@@ -1,13 +1,17 @@
 package net.cloud.service.impl;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.config.RabbitMQConfig;
 import net.cloud.controller.request.AccountLoginRequest;
 import net.cloud.controller.request.AccountRegisterRequest;
 import net.cloud.enums.AuthTypeEnum;
 import net.cloud.enums.BizCodeEnum;
+import net.cloud.enums.EventMessageType;
 import net.cloud.enums.SendCodeEnum;
 import net.cloud.manager.AccountManager;
 import net.cloud.model.AccountDO;
+import net.cloud.model.EventMessage;
 import net.cloud.model.LoginUser;
 import net.cloud.service.AccountService;
 import net.cloud.service.NotifyService;
@@ -17,9 +21,12 @@ import net.cloud.utils.JWTUtil;
 import net.cloud.utils.JsonData;
 import org.apache.commons.codec.digest.Md5Crypt;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -34,6 +41,17 @@ public class AccountServiceImpl implements AccountService {
     @Autowired
     private AccountManager accountManager;
 
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RabbitMQConfig rabbitMQConfig;
+
+    /**
+     * 免费流量包id固定为1
+     */
+    private static final Long FREE_TRAFFIC_PRODUCT_ID = 1L;
+
     /**
      * 用户注册流程：
      * 1、手机验证码验证
@@ -45,6 +63,7 @@ public class AccountServiceImpl implements AccountService {
      * @return
      */
     @Override
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
     public JsonData register(AccountRegisterRequest registerRequest) {
         boolean checkCode = false;
         //判断验证码
@@ -108,10 +127,16 @@ public class AccountServiceImpl implements AccountService {
     }
 
     /**
-     * 用户初始化发放福利 TODO
+     * 用户初始化发放福利：流量包
      * @param accountDO
      */
     private void userRegisterInitTask(AccountDO accountDO) {
-
+        EventMessage eventMessage = EventMessage.builder().messageId(IDUtil.geneSnowFlakeID().toString())
+                .accountNo(accountDO.getAccountNo())
+                .eventMessageType(EventMessageType.TRAFFIC_FREE_INIT.name())
+                .bizId(FREE_TRAFFIC_PRODUCT_ID.toString())
+                .build();
+        //发放流量包消息
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getTrafficEventExchange(),rabbitMQConfig.getTrafficFreeInitRoutingKey(),eventMessage);
     }
 }
