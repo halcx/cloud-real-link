@@ -133,6 +133,7 @@
             <artifactId>spring-cloud-starter-openfeign</artifactId>
         </dependency>
 
+
         <!--限流依赖-->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
