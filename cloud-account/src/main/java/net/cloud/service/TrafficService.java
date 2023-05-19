@@ -12,4 +12,6 @@ public interface TrafficService {
     Map<String, Object> pageAvailable(TrafficPageRequest request);
 
     TrafficVO detail(Long trafficId);
+
+    boolean deleteExpiredTraffic();
 }

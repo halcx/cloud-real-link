@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.enums.PluginTypeEnum;
 import net.cloud.manager.TrafficManager;
 import net.cloud.mapper.TrafficMapper;
 import net.cloud.model.TrafficDO;
@@ -13,6 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
+import java.util.List;
 
 
 @Component
@@ -44,17 +46,60 @@ public class TrafficManagerImpl implements TrafficManager {
         return trafficDO;
     }
 
+
+    @Override
+    public boolean deleteExpiredTraffic() {
+        int rows = trafficMapper.delete(new QueryWrapper<TrafficDO>().le("expired_date", new Date()));
+        log.info("删除过期流量包，行数:{}",rows);
+        return true;
+    }
+
     /**
-     * 给某个流量包增加天使用次数
-     * @param currentTrafficId
+     * 查找未过期的流量包列表（不一定可用，可能超过使用次数）
      * @param accountNo
-     * @param dayUseTimes
      * @return
      */
     @Override
-    public int addDayUseTimes(long currentTrafficId, Long accountNo, int dayUseTimes) {
-        return trafficMapper.update(null,new UpdateWrapper<TrafficDO>()
+    public List<TrafficDO> selectAvailableTraffics(Long accountNo) {
+        String today = TimeUtil.format(new Date(), "yyyy-MM-dd");
+
+        QueryWrapper<TrafficDO> queryWrapper = new QueryWrapper<>();
+
+        queryWrapper.eq("account_no",accountNo);
+        queryWrapper.and(wrapper->wrapper.ge("expired_date",today).or().eq("out_trade_no","free_init"));
+
+        return trafficMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 增加可用流量包次数
+     * @param accountNo
+     * @param trafficId
+     * @param usedTimes
+     * @return
+     */
+    @Override
+    public int addDayUsedTimes(Long accountNo, Long trafficId, Integer usedTimes) {
+        return trafficMapper.addDayUsedTimes(accountNo, trafficId, usedTimes);
+    }
+
+    @Override
+    public int releaseUsedTimes(Long accountNo, Long trafficId, Integer usedTimes) {
+        return trafficMapper.releaseUsedTimes(accountNo,trafficId, usedTimes);
+    }
+
+    /**
+     * 更新流量包，把每天使用量改为0
+     * @param accountNo
+     * @param unUpdatedTrafficIds
+     * @return
+     */
+    @Override
+    public int batchUpdateUsedTimes(Long accountNo, List<Long> unUpdatedTrafficIds) {
+        int update = trafficMapper.update(null, new UpdateWrapper<TrafficDO>()
                 .eq("account_no", accountNo)
-                .eq("id",currentTrafficId).set("day_used",dayUseTimes));
+                .in("id", unUpdatedTrafficIds)
+                .set("day_used", 0));
+        return update;
     }
 }

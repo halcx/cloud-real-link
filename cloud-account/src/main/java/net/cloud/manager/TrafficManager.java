@@ -3,6 +3,8 @@ package net.cloud.manager;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import net.cloud.model.TrafficDO;
 
+import java.util.List;
+
 public interface TrafficManager {
 
     /**
@@ -27,14 +29,36 @@ public interface TrafficManager {
      */
     TrafficDO findByIdAndAccountNo(Long trafficId,Long accountNo);
 
+    boolean deleteExpiredTraffic();
+
     /**
-     * 增加某个流量包天使用次数
-     * @param currentTrafficId
+     * 查找可⽤的短链流包(未过期),包括免费流包
      * @param accountNo
-     * @param dayUseTimes
      * @return
      */
-    int addDayUseTimes(long currentTrafficId,Long accountNo,int dayUseTimes);
+    List<TrafficDO> selectAvailableTraffics( Long accountNo);
 
+    /**
+     * 给某个流包增加使⽤次数
+     *
+     * @param accountNo
+     * @param usedTimes
+     * @return
+     */
+    int addDayUsedTimes(Long accountNo, Long trafficId, Integer usedTimes) ;
 
+    /**
+     * 恢复流包使⽤当天次数
+     * @param accountNo
+     * @param trafficId
+     * @param usedTimes
+     */
+    int releaseUsedTimes(Long accountNo, Long trafficId, Integer usedTimes);
+
+    /**
+     * 批更新流包使⽤次数为0
+     * @param accountNo
+     * @param unUpdatedTrafficIds
+     */
+    int batchUpdateUsedTimes(Long accountNo, List<Long> unUpdatedTrafficIds);
 }
