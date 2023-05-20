@@ -2,6 +2,7 @@ package net.cloud.manager;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import net.cloud.model.TrafficDO;
+import org.apache.kafka.common.protocol.types.Field;
 
 import java.util.List;
 
@@ -53,7 +54,7 @@ public interface TrafficManager {
      * @param trafficId
      * @param usedTimes
      */
-    int releaseUsedTimes(Long accountNo, Long trafficId, Integer usedTimes);
+    int releaseUsedTimes(Long accountNo, Long trafficId, Integer usedTimes, String useDateStr);
 
     /**
      * 批更新流包使⽤次数为0

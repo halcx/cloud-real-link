@@ -60,7 +60,7 @@ public class TrafficTest {
     public void testReleaseUsedTimes() {
         int rows =
                 trafficManager.releaseUsedTimes(693100647796441088L,
-                        1486221880318595076L,1);
+                        1486221880318595076L,1,"2023-05-22");
         log.info("rows={}",rows);
     }
     @Test

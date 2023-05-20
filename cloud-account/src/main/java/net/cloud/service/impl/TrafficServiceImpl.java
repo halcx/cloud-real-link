@@ -146,7 +146,14 @@ public class TrafficServiceImpl implements TrafficService {
                 JsonData check = shortLinkFeignService.check(trafficTaskDO.getBizId());
                 if(check.getCode()!=0){
                     log.error("创建短链失败，流量包回滚");
-                    trafficManager.releaseUsedTimes(accountNo,trafficTaskDO.getTrafficId(),1);
+                    //防止比如今天11：59分创建，创建失败了，次日00：01恢复了，这样明天就多了一次机会
+                    String useDateStr = TimeUtil.format(trafficTaskDO.getGmtCreate(), "yyyy-MM-dd");
+                    trafficManager.releaseUsedTimes(accountNo,trafficTaskDO.getTrafficId(),1,useDateStr);
+
+                    //恢复了之后，要把对应的key删除
+                    String totalTrafficTimesKey = String.format(RedisKey.DAY_TOTAL_TRAFFIC,accountNo);
+                    //如果key不存在，就会触发重新计算，拿到最新的流量包使用次数
+                    redisTemplate.delete(totalTrafficTimesKey);
                 }
                 //这块儿可以不删除，有多种方式处理。可以设置状态，然后定时删除
                 trafficTaskManager.deleteByIdAndAccountNo(trafficTaskId,accountNo);
