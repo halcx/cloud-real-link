@@ -25,15 +25,23 @@
 
     <!--给某个流量包增加天使用次数-->
     <update id="addDayUsedTimes">
+
         update traffic set day_used = day_used + #{usedTimes}
         where id = #{trafficId} and account_no = #{accountNo}
-        and (day_limit - day_used) >= #{usedTimes} limit 1
+          and (day_limit - day_used) >= #{usedTimes} limit 1
+
     </update>
+
 
     <!--恢复流量包-->
     <update id="releaseUsedTimes">
+
         update traffic set day_used = day_used - #{usedTimes}
+
         where id = #{trafficId} and account_no = #{accountNo}
-        and (day_used - #{usedTimes}) >= 0 limit 1;
+
+          and (day_used - #{usedTimes}) >= 0 and date_format(gmt_modified,'%Y-%m-%d') = #{useDateStr} limit 1;
+
+
     </update>
 </mapper>

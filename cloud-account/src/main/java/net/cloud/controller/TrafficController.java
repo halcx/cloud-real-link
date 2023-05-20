@@ -47,7 +47,7 @@ public class TrafficController {
      * @return
      */
     @PostMapping("reduce")
-    public JsonData useTraffic(UseTrafficRequest useTrafficRequest, HttpServletRequest request){
+    public JsonData useTraffic(@RequestBody UseTrafficRequest useTrafficRequest, HttpServletRequest request){
         String requestToken = request.getHeader("rpc-token");
         if(rpcToken.equalsIgnoreCase(requestToken)){
             JsonData jsonData = trafficService.reduce(useTrafficRequest);

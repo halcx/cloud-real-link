@@ -3,7 +3,9 @@ package net.cloud.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.component.ShortLinkComponent;
 import net.cloud.config.RabbitMQConfig;
+import net.cloud.constant.RedisKey;
 import net.cloud.controller.request.*;
+import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.DomainTypeEnum;
 import net.cloud.enums.EventMessageType;
 import net.cloud.enums.ShortLinkStateEnum;
@@ -88,17 +90,29 @@ public class ShortLinkServiceImpl implements ShortLinkService {
     public JsonData createShortLink(ShortLinkAddRequest request) {
         Long accountNo = LoginInterceptor.threadLocal.get().getAccountNo();
 
-        String newOriginalUrl = CommonUtil.addUrlPrefix(request.getOriginalUrl());
-        request.setOriginalUrl(newOriginalUrl);
+        // 需要预先检查下是否有⾜够多的可以进⾏创建
+        String cacheKey = String.format(RedisKey.DAY_TOTAL_TRAFFIC, accountNo);
+        // 检查key是否存在，然后递减，是否⼤于等于0，使⽤lua脚本
+        // 如果key不存在，则未使⽤过，lua返回值是0； 新增流包的时候，不⽤新计算次数，直接删除key,消费的时候回计算更新
 
-        EventMessage eventMessage = EventMessage.builder()
-                .accountNo(accountNo)
-                .content(JsonUtil.obj2Json(request))
-                .messageId(IDUtil.geneSnowFlakeID().toString())
-                .eventMessageType(EventMessageType.SHORT_LINK_ADD.name())
-                .build();
-        rabbitTemplate.convertAndSend(rabbitMQConfig.getShortLinkEventExchange(),rabbitMQConfig.getShortLinkAddRoutingKey(),eventMessage);
-        return JsonData.buildSuccess();
+        String script = "if redis.call('get',KEYS[1]) then return redis.call('decr',KEYS[1]) else return 0 end";
+
+        Long leftTimes = redisTemplate.execute(new DefaultRedisScript<>(script, Long.class), Arrays.asList(cacheKey), "");
+        log.info("今⽇流量包剩余次数:{}", leftTimes);
+        if (leftTimes >= 0) {
+            String newOriginalUrl = CommonUtil.addUrlPrefix(request.getOriginalUrl());
+            request.setOriginalUrl(newOriginalUrl);
+            EventMessage eventMessage = EventMessage.builder()
+                    .accountNo(accountNo)
+                    .content(JsonUtil.obj2Json(request))
+                    .messageId(IDUtil.geneSnowFlakeID().toString())
+                    .eventMessageType(EventMessageType.SHORT_LINK_ADD.name())
+                    .build();
+            rabbitTemplate.convertAndSend(rabbitMQConfig.getShortLinkEventExchange(),rabbitMQConfig.getShortLinkAddRoutingKey(),eventMessage);
+            return JsonData.buildSuccess();
+        } else {
+            return JsonData.buildResult(BizCodeEnum.TRAFFIC_REDUCE_FAIL);
+        }
     }
 
     /**

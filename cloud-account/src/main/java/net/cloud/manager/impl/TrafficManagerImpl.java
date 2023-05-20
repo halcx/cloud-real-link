@@ -61,12 +61,14 @@ public class TrafficManagerImpl implements TrafficManager {
      */
     @Override
     public List<TrafficDO> selectAvailableTraffics(Long accountNo) {
-        String today = TimeUtil.format(new Date(), "yyyy-MM-dd");
 
-        QueryWrapper<TrafficDO> queryWrapper = new QueryWrapper<>();
+        String today = TimeUtil.format(new Date(),"yyyy-MM-dd");
+
+        QueryWrapper<TrafficDO> queryWrapper = new QueryWrapper<TrafficDO>();
 
         queryWrapper.eq("account_no",accountNo);
-        queryWrapper.and(wrapper->wrapper.ge("expired_date",today).or().eq("out_trade_no","free_init"));
+        queryWrapper.and(wrapper->wrapper.ge("expired_date",today)
+                .or().eq("out_trade_no","free_init"));
 
         return trafficMapper.selectList(queryWrapper);
     }
