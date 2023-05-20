@@ -3,13 +3,11 @@ package net.cloud.service.impl;
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.component.ShortLinkComponent;
 import net.cloud.config.RabbitMQConfig;
-import net.cloud.controller.request.ShortLinkAddRequest;
-import net.cloud.controller.request.ShortLinkDelRequest;
-import net.cloud.controller.request.ShortLinkPageRequest;
-import net.cloud.controller.request.ShortLinkUpdateRequest;
+import net.cloud.controller.request.*;
 import net.cloud.enums.DomainTypeEnum;
 import net.cloud.enums.EventMessageType;
 import net.cloud.enums.ShortLinkStateEnum;
+import net.cloud.feign.TrafficFeignService;
 import net.cloud.interceptor.LoginInterceptor;
 import net.cloud.manager.DomainManager;
 import net.cloud.manager.GroupCodeMappingManager;
@@ -61,6 +59,9 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
     @Autowired
     private RedisTemplate<Object,Object> redisTemplate;
+
+    @Autowired
+    private TrafficFeignService trafficFeignService;
 
     /**
      * 解析短链
@@ -155,22 +156,26 @@ public class ShortLinkServiceImpl implements ShortLinkService {
                 //在数据库里面是否被占用，如果不为空，则已经被占用了
                 ShortLinkDO shortLinkCodeDOInDB = shortLinkManager.findByShortLinkCode(shortLinkCode);
                 if(shortLinkCodeDOInDB==null){
-                    //存储短链码
-                    ShortLinkDO shorLinkDo = ShortLinkDO.builder()
-                            .accountNo(accountNo)
-                            .code(shortLinkCode)
-                            .title(shortLinkAddRequest.getTitle())
-                            .originalUrl(shortLinkAddRequest.getOriginalUrl())
-                            .domain(domainDO.getValue())
-                            .groupId(linkGroupDO.getId())
-                            .expired(shortLinkAddRequest.getExpired())
-                            .sign(originalUrlDigest)
-                            .state(ShortLinkStateEnum.ACTIVE.name())
-                            .del(0)
-                            .build();
+                    boolean reduceFlag = reduceTraffic(eventMessage,shortLinkCode);
+                    //扣减成功再创建短链
+                    if(reduceFlag){
+                        //存储短链码
+                        ShortLinkDO shorLinkDo = ShortLinkDO.builder()
+                                .accountNo(accountNo)
+                                .code(shortLinkCode)
+                                .title(shortLinkAddRequest.getTitle())
+                                .originalUrl(shortLinkAddRequest.getOriginalUrl())
+                                .domain(domainDO.getValue())
+                                .groupId(linkGroupDO.getId())
+                                .expired(shortLinkAddRequest.getExpired())
+                                .sign(originalUrlDigest)
+                                .state(ShortLinkStateEnum.ACTIVE.name())
+                                .del(0)
+                                .build();
 
-                    shortLinkManager.addShortLink(shorLinkDo);
-                    return true;
+                        shortLinkManager.addShortLink(shorLinkDo);
+                        return true;
+                    }
                 }else {
                     //不为空就重复了
                     log.error("C端短链码重复：{}",eventMessage);
@@ -228,6 +233,22 @@ public class ShortLinkServiceImpl implements ShortLinkService {
         }
 
         return false;
+    }
+
+    /**
+     * 扣减流量包
+     * @param eventMessage
+     * @param shortLinkCode
+     * @return
+     */
+    private boolean reduceTraffic(EventMessage eventMessage, String shortLinkCode) {
+        UseTrafficRequest request = UseTrafficRequest.builder().accountNo(eventMessage.getAccountNo()).bizId(shortLinkCode).build();
+        JsonData jsonData = trafficFeignService.useTraffic(request);
+        if(jsonData.getCode()!=0){
+            log.error("流量包不足，扣减失败:{}",eventMessage);
+            return false;
+        }
+        return true;
     }
 
     @Override

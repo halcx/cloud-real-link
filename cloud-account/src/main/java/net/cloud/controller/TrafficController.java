@@ -7,6 +7,7 @@ import net.cloud.utils.JsonData;
 import net.cloud.vo.TrafficVO;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -18,6 +19,9 @@ public class TrafficController {
 
     @Autowired
     private TrafficService trafficService;
+
+    @Value("${rpc.token}")
+    private String rpcToken;
 
     @RequestMapping("page")
     public JsonData pageAvailable(@RequestBody TrafficPageRequest request){
@@ -44,7 +48,12 @@ public class TrafficController {
      */
     @PostMapping("reduce")
     public JsonData useTraffic(UseTrafficRequest useTrafficRequest, HttpServletRequest request){
-        JsonData jsonData = trafficService.reduce(useTrafficRequest);
-        return jsonData;
+        String requestToken = request.getHeader("rpc-token");
+        if(rpcToken.equalsIgnoreCase(requestToken)){
+            JsonData jsonData = trafficService.reduce(useTrafficRequest);
+            return jsonData;
+        }else {
+            return JsonData.buildError("非法访问");
+        }
     }
 }
