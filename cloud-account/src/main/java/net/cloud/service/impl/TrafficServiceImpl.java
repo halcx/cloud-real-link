@@ -3,18 +3,23 @@ package net.cloud.service.impl;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.config.RabbitMQConfig;
 import net.cloud.constant.RedisKey;
 import net.cloud.controller.request.TrafficPageRequest;
 import net.cloud.controller.request.UseTrafficRequest;
 import net.cloud.enums.BizCodeEnum;
 import net.cloud.enums.EventMessageType;
+import net.cloud.enums.TaskStateEnum;
 import net.cloud.exception.BizException;
 import net.cloud.feign.ProductFeignService;
+import net.cloud.feign.ShortLinkFeignService;
 import net.cloud.interceptor.LoginInterceptor;
 import net.cloud.manager.TrafficManager;
+import net.cloud.manager.TrafficTaskManager;
 import net.cloud.model.EventMessage;
 import net.cloud.model.LoginUser;
 import net.cloud.model.TrafficDO;
+import net.cloud.model.TrafficTaskDO;
 import net.cloud.service.TrafficService;
 import net.cloud.utils.JsonData;
 import net.cloud.utils.JsonUtil;
@@ -22,6 +27,7 @@ import net.cloud.utils.TimeUtil;
 import net.cloud.vo.ProductVO;
 import net.cloud.vo.TrafficVO;
 import net.cloud.vo.UseTrafficVO;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -47,6 +53,18 @@ public class TrafficServiceImpl implements TrafficService {
 
     @Autowired
     private RedisTemplate<Object,Object> redisTemplate;
+
+    @Autowired
+    private TrafficTaskManager trafficTaskManager;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private RabbitMQConfig rabbitMQConfig;
+
+    @Autowired
+    private ShortLinkFeignService shortLinkFeignService;
 
     @Override
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
@@ -115,6 +133,24 @@ public class TrafficServiceImpl implements TrafficService {
                     .expiredDate(new Date()).build();
 
             trafficManager.add(trafficDO);
+        }else if(EventMessageType.TRAFFIC_USED.name().equalsIgnoreCase(messageType)){
+            //流量包使用，检查是否成功使用
+            //检查task是否存在
+            //如果存在检查是否lock状态
+            //检查短链是否成功，如果不成功则恢复流量包
+            //删除task（也可以更新task的状态，定时删除就行，避免表过大）
+            Long trafficTaskId = Long.valueOf(eventMessage.getBizId());
+            TrafficTaskDO trafficTaskDO = trafficTaskManager.findByIdAndAccountNo(trafficTaskId, accountNo);
+            if(trafficTaskDO!=null&&trafficTaskDO.getLockState().equalsIgnoreCase(TaskStateEnum.LOCK.name())){
+                //非空且锁定，再feign远程调用
+                JsonData check = shortLinkFeignService.check(trafficTaskDO.getBizId());
+                if(check.getCode()!=0){
+                    log.error("创建短链失败，流量包回滚");
+                    trafficManager.releaseUsedTimes(accountNo,trafficTaskDO.getTrafficId(),1);
+                }
+                //这块儿可以不删除，有多种方式处理。可以设置状态，然后定时删除
+                trafficTaskManager.deleteByIdAndAccountNo(trafficTaskId,accountNo);
+            }
         }
     }
 
@@ -188,6 +224,14 @@ public class TrafficServiceImpl implements TrafficService {
         }
         //先更新，再扣件当前使用的流量包
         int rows = trafficManager.addDayUsedTimes(accountNo, useTrafficVO.getCurrentTrafficDO().getId(), 1);
+
+        //扣减成功之后要创建本地task
+        TrafficTaskDO trafficTaskDO = TrafficTaskDO.builder().accountNo(accountNo).bizId(useTrafficRequest.getBizId())
+                .useTimes(1).trafficId(useTrafficVO.getCurrentTrafficDO().getId())
+                .lockState(TaskStateEnum.LOCK.name()).build();
+        trafficTaskManager.add(trafficTaskDO);
+
+
         if(rows!=1){
             throw new BizException(BizCodeEnum.TRAFFIC_EXCEPTION);
         }
@@ -199,6 +243,12 @@ public class TrafficServiceImpl implements TrafficService {
         //放到redis，配置过期时间
         redisTemplate.opsForValue().set(totalTrafficTimesKey,
                 useTrafficVO.getDayTotalLeftTimes()-1,leftSeconds, TimeUnit.SECONDS);
+
+        EventMessage trafficUseEventMessage = EventMessage.builder().accountNo(accountNo).bizId(trafficTaskDO.getId() + "")
+                .eventMessageType(EventMessageType.TRAFFIC_USED.name()).build();
+        //发送延迟消息，用于异常回滚
+        rabbitTemplate.convertAndSend(rabbitMQConfig.getTrafficEventExchange(),rabbitMQConfig.getTrafficReleaseDelayRoutingKey(),
+                trafficUseEventMessage);
 
 
         return JsonData.buildSuccess();

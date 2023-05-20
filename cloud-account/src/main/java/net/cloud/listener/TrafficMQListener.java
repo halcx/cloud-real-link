@@ -16,7 +16,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RabbitListener(queuesToDeclare = {
         @Queue("order.traffic.queue"),
-        @Queue("traffic.free_init.queue")
+        @Queue("traffic.free_init.queue"),
+        @Queue("traffic.release.queue")
 })
 @Slf4j
 public class TrafficMQListener {

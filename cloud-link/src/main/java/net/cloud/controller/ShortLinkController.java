@@ -7,13 +7,12 @@ import net.cloud.controller.request.ShortLinkPageRequest;
 import net.cloud.controller.request.ShortLinkUpdateRequest;
 import net.cloud.service.ShortLinkService;
 import net.cloud.utils.JsonData;
+import net.cloud.vo.ShortLinkVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.bind.annotation.*;
 
-import org.springframework.web.bind.annotation.RestController;
-
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
@@ -30,6 +29,9 @@ public class ShortLinkController {
 
     @Autowired
     private ShortLinkService shortLinkService;
+
+    @Value("${rpc.token}")
+    private String rpcToken;
 
     /**
      * 新增短链
@@ -73,6 +75,18 @@ public class ShortLinkController {
     public JsonData update(@RequestBody ShortLinkUpdateRequest request){
         JsonData jsonData = shortLinkService.update(request);
         return jsonData;
+    }
+
+    @GetMapping( "check")
+    JsonData check(@RequestParam("shortLinkCode") String shortLinkCode, HttpServletRequest request){
+        String token = request.getHeader("rpc-token");
+        if(rpcToken.equalsIgnoreCase(token)){
+            ShortLinkVO shortLinkVO = shortLinkService.parseShortLinkCode(shortLinkCode);
+
+            return shortLinkVO==null?JsonData.buildError("短链不存在"):JsonData.buildSuccess();
+        }else {
+            return JsonData.buildError("非法访问");
+        }
     }
 }
 
