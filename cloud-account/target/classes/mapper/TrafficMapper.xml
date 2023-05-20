@@ -23,4 +23,17 @@
         id, day_limit, day_used, total_limit, account_no, out_trade_no, level, expired_date, plugin_type, product_id, gmt_create, gmt_modified
     </sql>
 
+    <!--给某个流量包增加天使用次数-->
+    <update id="addDayUsedTimes">
+        update traffic set day_used = day_used + #{usedTimes}
+        where id = #{trafficId} and account_no = #{accountNo}
+        and (day_limit - day_used) >= #{usedTimes} limit 1
+    </update>
+
+    <!--恢复流量包-->
+    <update id="releaseUsedTimes">
+        update traffic set day_used = day_used - #{usedTimes}
+        where id = #{trafficId} and account_no = #{accountNo}
+        and (day_used - #{usedTimes}) >= 0 limit 1;
+    </update>
 </mapper>

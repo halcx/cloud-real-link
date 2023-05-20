@@ -44,6 +44,7 @@ public class TrafficController {
      */
     @PostMapping("reduce")
     public JsonData useTraffic(UseTrafficRequest useTrafficRequest, HttpServletRequest request){
-        return JsonData.buildSuccess();
+        JsonData jsonData = trafficService.reduce(useTrafficRequest);
+        return jsonData;
     }
 }

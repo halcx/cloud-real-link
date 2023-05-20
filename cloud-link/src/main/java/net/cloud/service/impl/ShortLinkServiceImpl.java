@@ -102,7 +102,7 @@ public class ShortLinkServiceImpl implements ShortLinkService {
 
     /**
      * 短链新增逻辑 C端
-     *
+     * 
      * 1、判断短链域名是否合法
      * 2、判断著名是否合法
      * 3、生成长链摘要
