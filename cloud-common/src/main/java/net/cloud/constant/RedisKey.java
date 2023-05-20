@@ -11,4 +11,9 @@ public class RedisKey {
      * 提交订单令牌的缓存key
      */
     public static final String SUBMIT_ORDER_TOKEN_KEY = "order:submit:%s:%s";
+
+    /**
+     * 一天可用的总流量包
+     */
+    public static final String DAY_TOTAL_TRAFFIC = "lock:traffic:day_total:%s";
 }

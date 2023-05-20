@@ -3,6 +3,7 @@ package net.cloud.service.impl;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
+import net.cloud.constant.RedisKey;
 import net.cloud.controller.request.TrafficPageRequest;
 import net.cloud.controller.request.UseTrafficRequest;
 import net.cloud.enums.BizCodeEnum;
@@ -23,7 +24,7 @@ import net.cloud.vo.TrafficVO;
 import net.cloud.vo.UseTrafficVO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +44,9 @@ public class TrafficServiceImpl implements TrafficService {
 
     @Autowired
     private ProductFeignService productFeignService;
+
+    @Autowired
+    private RedisTemplate<Object,Object> redisTemplate;
 
     @Override
     @Transactional(rollbackFor = Exception.class,propagation = Propagation.REQUIRED)
@@ -82,6 +87,10 @@ public class TrafficServiceImpl implements TrafficService {
 
             int rows = trafficManager.add(trafficDO);
             log.info("消费消息新增流量包:rows={},{}",rows,trafficDO);
+            //新增流量包应该删除原来的key，触发重新的计算
+            String totalTrafficTimesKey = String.format(RedisKey.DAY_TOTAL_TRAFFIC,accountNo);
+            redisTemplate.delete(totalTrafficTimesKey);
+
         }else if(EventMessageType.TRAFFIC_FREE_INIT.name().equalsIgnoreCase(messageType)){
             //发放免费流量包
             //这里需要RPC调用，因为我们不知道免费流量包每年创建多少次短链
@@ -182,6 +191,16 @@ public class TrafficServiceImpl implements TrafficService {
         if(rows!=1){
             throw new BizException(BizCodeEnum.TRAFFIC_EXCEPTION);
         }
+
+        //往redis设置下总流量包次数，短链服务那边递减即可；如果有新增流量包，则删除这个key
+        //看剩余多长时间
+        long leftSeconds = TimeUtil.getRemainSecondsOneDay(new Date());
+        String totalTrafficTimesKey = String.format(RedisKey.DAY_TOTAL_TRAFFIC,accountNo);
+        //放到redis，配置过期时间
+        redisTemplate.opsForValue().set(totalTrafficTimesKey,
+                useTrafficVO.getDayTotalLeftTimes()-1,leftSeconds, TimeUnit.SECONDS);
+
+
         return JsonData.buildSuccess();
     }
 
