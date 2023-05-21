@@ -2,6 +2,7 @@ package net.cloud.controller;
 
 import lombok.extern.slf4j.Slf4j;
 import net.cloud.enums.ShortLinkStateEnum;
+import net.cloud.service.LogService;
 import net.cloud.service.ShortLinkService;
 import net.cloud.utils.CommonUtil;
 import net.cloud.vo.ShortLinkVO;
@@ -23,6 +24,9 @@ public class LinkApiController {
     @Autowired
     private ShortLinkService shortLinkService;
 
+    @Autowired
+    private LogService logService;
+
     /**
      * 做跳转的时候我们用302还是301？
      * 1、301是永久重定向，302是临时重定向
@@ -36,7 +40,7 @@ public class LinkApiController {
     @GetMapping(path = "/{shortLinkCode}")
     public void dispatch(@PathVariable(name = "shortLinkCode")String shortLinkCode,
                          HttpServletRequest request, HttpServletResponse response){
-
+        logService.recordShortLinkLog(shortLinkCode);
         try {
             log.info("短链码:{}",shortLinkCode);
             //判断短链码是否合规

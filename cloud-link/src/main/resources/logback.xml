@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_HOME" value="./data/logs/link" />
+    <!--采⽤打印到控制台，记录⽇志的⽅式-->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 采⽤保存到⽇志⽂件 记录⽇志的⽅式-->
+    <appender name="rollingFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/link.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/link-%d{yyyy-MM-dd}.log</fileNamePattern>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+    <!-- 指定某个类单独打印⽇志 -->
+    <logger name="net.cloud.service.impl.LogServiceImpl" level="INFO" additivity="false">
+        <appender-ref ref="rollingFile" />
+        <appender-ref ref="console" />
+    </logger>
+    <root level="error" additivity="false">
+        <appender-ref ref="console" />
+    </root>
+</configuration>

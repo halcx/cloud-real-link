@@ -153,6 +153,7 @@ public class TrafficServiceImpl implements TrafficService {
                     //恢复了之后，要把对应的key删除
                     String totalTrafficTimesKey = String.format(RedisKey.DAY_TOTAL_TRAFFIC,accountNo);
                     //如果key不存在，就会触发重新计算，拿到最新的流量包使用次数
+                    //也可以把这个key递增，但是最好是删除，减少损耗
                     redisTemplate.delete(totalTrafficTimesKey);
                 }
                 //这块儿可以不删除，有多种方式处理。可以设置状态，然后定时删除
