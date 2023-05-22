@@ -40,13 +40,16 @@ public class LinkApiController {
     @GetMapping(path = "/{shortLinkCode}")
     public void dispatch(@PathVariable(name = "shortLinkCode")String shortLinkCode,
                          HttpServletRequest request, HttpServletResponse response){
-        logService.recordShortLinkLog(shortLinkCode);
+
         try {
             log.info("短链码:{}",shortLinkCode);
             //判断短链码是否合规
             if(isLetterDigit(shortLinkCode)){
                 //查找短链
                 ShortLinkVO shortLinkVO = shortLinkService.parseShortLinkCode(shortLinkCode);
+                if(shortLinkVO!=null){
+                    logService.recordShortLinkLog(request,shortLinkCode,shortLinkVO.getAccountNo());
+                }
                 if(isVisitable(shortLinkVO)){
 
                     String originalUrl = CommonUtil.removeUrlPrefix(shortLinkVO.getOriginalUrl());
